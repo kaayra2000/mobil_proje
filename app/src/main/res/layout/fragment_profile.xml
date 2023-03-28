@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/white">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="@color/white">
+            <ImageView
+                android:id="@+id/userPhoto"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxWidth="120dp"
+                android:maxHeight="120dp"
+                android:scaleType="centerCrop"
+                android:background="@drawable/rounded_bg"
+                android:adjustViewBounds="true"
+                android:focusable="false" />
+            <EditText
+                android:id="@+id/nameText"
+                android:drawableLeft="@drawable/baseline_name_surname"
+                style="@style/EditTextStyle"
+                android:layout_marginVertical="@dimen/verticalText"
+                android:focusable="false"/>
+
+            <EditText
+                android:id="@+id/surNameText"
+                android:drawableLeft="@drawable/baseline_name_surname"
+                style="@style/EditTextStyle"
+                android:layout_marginVertical="@dimen/verticalText"
+                android:focusable="false"/>
+
+
+            <EditText
+                android:id="@+id/startDateText"
+                android:drawableLeft="@drawable/baseline_date_24"
+                style="@style/EditTextStyle"
+                android:layout_marginVertical="@dimen/verticalText"
+                android:inputType="date"
+                android:focusable="false"
+                />
+            <EditText
+                android:id="@+id/endDateText"
+                style="@style/EditTextStyle"
+                android:drawableLeft="@drawable/baseline_date_24"
+                android:layout_marginVertical="@dimen/verticalText"
+                android:inputType="date"
+                android:focusable="false" />
+            <EditText
+                style="@style/EditTextStyle"
+                android:layout_marginVertical="@dimen/verticalText"
+                android:id="@+id/gradOption"
+                android:drawableLeft="@drawable/baseline_grad_color_24"
+                android:focusable="false" />
+
+            <Button
+                android:id="@+id/exitButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="@dimen/verticalText"
+                android:layout_gravity="center"
+                android:gravity="center_horizontal"
+                android:text="@string/cikis"
+                android:textAllCaps="false"/>
+
+        </LinearLayout>
+    </ScrollView>
+
+</layout>

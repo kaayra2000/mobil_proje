@@ -1,0 +1,36 @@
+<resources>
+    <string name="app_name">mobil proje</string>
+    <string name="action_settings">Settings</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+    <string name="email">E-Mail</string>
+    <string name="password">Password</string>
+    <string name="register">Register</string>
+    <string name="name">Name</string>
+    <string name="surName">Surname</string>
+    <string name="gradYear">Graduation Year</string>
+    <string name="gender">Gender</string>
+    <string name="photo">Photo</string>
+    <string-array name="optionArray">
+        <item>Licence</item>
+        <item>Degree</item>
+        <item>Doctorate</item>
+    </string-array>
+    <string name="phoneNumber">Phone Number</string>
+    <string name="login">Login</string>
+    <string name="hello_first_fragment">Hello first fragment</string>
+    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
+    <string name="startDate">Start Date</string>
+    <string name="endDate">Grad. Date</string>
+    <string name="username">Username</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="update">Update</string>
+    <string name="successful">Successful</string>
+    <string name="cikis">Exit</string>
+    <string name="retype_password">Retype Password</string>
+    <string name="show_password">Show Password</string>
+</resources>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/FirstFragment">
+
+    <fragment
+        android:id="@+id/FirstFragment"
+        android:name="com.example.mobilproje.LoginFragment"
+        android:label="Login"
+        tools:layout="@layout/fragment_login">
+
+        <action
+            android:id="@+id/action_FirstFragment_to_SecondFragment"
+            app:destination="@id/SecondFragment" />
+        <action
+            android:id="@+id/action_FirstFragment_to_profileSettings"
+            app:popUpTo="@id/profile"
+            app:popUpToInclusive="true"
+            app:destination="@id/profile" />
+    </fragment>
+    <fragment
+        android:id="@+id/SecondFragment"
+        android:name="com.example.mobilproje.RegisterFragment"
+        android:label="Register"
+        tools:layout="@layout/fragment_register">
+
+        <action
+            android:id="@+id/action_SecondFragment_to_FirstFragment"
+            app:destination="@id/FirstFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/profileSettings"
+        android:name="com.example.mobilproje.ProfileSettingsFragment"
+        android:label="Settings"
+        tools:layout="@layout/fragment_profile_settings">
+        <argument android:name="user" />
+        <action
+            android:id="@+id/action_profileFragment_to_profileSettings"
+            app:destination="@id/profile" />
+    </fragment>
+    <fragment
+        android:id="@+id/profile"
+        android:name="com.example.mobilproje.ProfileFragment"
+        android:label="Profile"
+        tools:layout="@layout/fragment_profile">
+        <action
+            android:id="@+id/action_profileSettings_to_profileFragment"
+            app:destination="@id/profileSettings" />
+        <action
+            android:id="@+id/action_profileSettings_to_FirstFragment"
+            app:popUpTo="@id/FirstFragment"
+            app:popUpToInclusive="true"
+            app:destination="@id/FirstFragment" />
+    </fragment>
+</navigation>
