@@ -53,5 +53,37 @@
             app:popUpTo="@id/FirstFragment"
             app:popUpToInclusive="true"
             app:destination="@id/FirstFragment" />
+        <action
+            android:id="@+id/action_profile_to_homeScreen"
+            app:destination="@id/homeScreen" />
     </fragment>
+
+    <fragment
+        android:id="@+id/homeScreen"
+        android:name="com.example.mobilproje.HomeScreen"
+        android:label="HomeScreen" >
+        <action
+            android:id="@+id/action_homeScreen_to_fragmentAddUser"
+            app:destination="@id/fragmentAddUser" />
+        <action
+            android:id="@+id/action_homeScreen_to_listUserFragment"
+            app:destination="@id/listUserFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/fragmentAddUser"
+        android:name="com.example.mobilproje.FragmentAddUser"
+        android:label="FragmentAddUser" />
+    <fragment
+        android:id="@+id/listUserFragment"
+        android:name="com.example.mobilproje.ListUserFragment"
+        android:label="fragment_list_user"
+        tools:layout="@layout/fragment_list_user" >
+        <action
+            android:id="@+id/action_listUserFragment_to_partnerFragment"
+            app:destination="@id/partnerFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/partnerFragment"
+        android:name="com.example.mobilproje.PartnerFragment"
+        android:label="PartnerFragment" />
 </navigation>

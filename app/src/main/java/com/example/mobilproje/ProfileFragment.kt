@@ -83,7 +83,10 @@ class ProfileFragment : Fragment() {
 
 
 
+        binding.navigateButton.setOnClickListener {
 
+            findNavController().navigate(R.id.action_profile_to_homeScreen)
+        }
 
         val callback = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -130,7 +133,6 @@ class ProfileFragment : Fragment() {
     }
     private fun updateUser(i : DataSnapshot){
         try{
-        val situation = situation.valueOf((i.child("situation").getValue()).toString())
         user = GraduatPerson(
             email = i.child("email").getValue().toString(),
             name = i.child("name").getValue().toString(),
@@ -139,7 +141,6 @@ class ProfileFragment : Fragment() {
             phoneNumber = i.child("phoneNumber").getValue().toString(),
             startDate =  i.child("startDate").getValue().toString(),
             endDate =  i.child("endDate").getValue().toString(),
-            situation = situation,
             userName = i.child("userName").getValue().toString(),
             photo = i.child("photo").getValue().toString()
 
@@ -151,7 +152,7 @@ class ProfileFragment : Fragment() {
     }
     private fun initValues(){
 
-        user?.let {binding.gradOption.setText(user.situation?.toString())
+        user?.let {
             binding.nameText.setText(user.name)
             binding.surNameText.setText(user.surName)
             binding.startDateText.setText(user.startDate)

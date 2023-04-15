@@ -15,9 +15,9 @@
     <string name="gender">Gender</string>
     <string name="photo">Photo</string>
     <string-array name="optionArray">
-        <item>Licence</item>
-        <item>Degree</item>
-        <item>Doctorate</item>
+        <item>Looking House</item>
+        <item>Looking Firend</item>
+        <item>Not Looking</item>
     </string-array>
     <string name="phoneNumber">Phone Number</string>
     <string name="login">Login</string>
@@ -33,4 +33,19 @@
     <string name="cikis">Exit</string>
     <string name="retype_password">Retype Password</string>
     <string name="show_password">Show Password</string>
+    <string name="add_update">Add/Update</string>
+    <string name="save">Save</string>
+    <string name="stay_duration">Stay Duration</string>
+    <string name="distance_to_campus">Distance to Campus (Meter)</string>
+    <string name="status">Status</string>
+    <string name="department">Department</string>
+    <string name="student_class">Class</string>
+    <string name="home_page">Home Page</string>
+    <string name="find">Find</string>
+    <string name="create_update_profile">Create/Update Profile</string>
+    <string name="list_users">List Users</string>
+    <string name="map">Map</string>
+    <string name="delete">Delete</string>
+    <string name="find_friend">Find Friend</string>
+    <string name="send_request">Send Request</string>
 </resources>

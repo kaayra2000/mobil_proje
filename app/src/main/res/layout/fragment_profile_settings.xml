@@ -90,12 +90,6 @@
                 android:inputType="date"
                 android:focusable="false"
                 android:clickable="true"/>
-            <Spinner
-                style="@style/EditTextStyle"
-                android:layout_marginVertical="@dimen/verticalText"
-                android:id="@+id/gradOption"
-                android:entries = "@array/optionArray"
-                android:layout_marginLeft="@dimen/centerilaze"/>
 
             <Button
                 android:id="@+id/updateButton"

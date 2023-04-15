@@ -51,23 +51,32 @@
                 android:layout_marginVertical="@dimen/verticalText"
                 android:inputType="date"
                 android:focusable="false" />
-            <EditText
-                style="@style/EditTextStyle"
-                android:layout_marginVertical="@dimen/verticalText"
-                android:id="@+id/gradOption"
-                android:drawableLeft="@drawable/baseline_grad_color_24"
-                android:focusable="false" />
 
-            <Button
-                android:id="@+id/exitButton"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginVertical="@dimen/verticalText"
-                android:layout_gravity="center"
-                android:gravity="center_horizontal"
-                android:text="@string/cikis"
-                android:textAllCaps="false"/>
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:background="@color/white">
+                <Button
+                    android:id="@+id/navigateButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginVertical="@dimen/verticalText"
+                    android:layout_gravity="center"
+                    android:text="@string/find"
+                    android:layout_marginRight="25dp"
+                    android:textAllCaps="false"/>
+                <Button
+                    android:id="@+id/exitButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginVertical="@dimen/verticalText"
+                    android:layout_gravity="center"
+                    android:text="@string/cikis"
+                    android:textAllCaps="false"/>
 
+            </LinearLayout>
         </LinearLayout>
     </ScrollView>
 

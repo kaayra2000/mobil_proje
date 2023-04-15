@@ -2,10 +2,12 @@ package com.example.mobilproje
 
 import GraduatPerson
 import android.app.Activity.RESULT_OK
+import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Base64
 import android.os.Bundle
@@ -25,7 +27,7 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
-import situation
+import kotlinx.android.synthetic.main.fragment_register.*
 import java.io.ByteArrayOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
@@ -35,6 +37,8 @@ import java.util.*
  */
 val USER_NAME_REGEX = "^[A-Za-z][A-Za-z0-9_]{7,29}$"
 val PASSWORD_REGEX = "^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9]).{8,}$"
+val EMAIL_REGEX = "^[A-Za-z]{3,35}[A-Za-z0-9._%+-]+@std\\.yildiz\\.edu\\.tr\$"
+val PHONE_NUMBER_REGEX = "^(5)([0-9]){9}\$"
 class RegisterFragment : Fragment() {
 
     private var _binding: FragmentRegisterBinding? = null
@@ -87,8 +91,22 @@ class RegisterFragment : Fragment() {
         }
 
         imageView.setOnClickListener {
-            val gallery = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI)
-            startActivityForResult(gallery, pickImage)
+            val options = arrayOf<CharSequence>("Galeri", "Kamera")
+            val builder = AlertDialog.Builder(context)
+            builder.setTitle("Resim Seçin")
+            builder.setItems(options) { dialog, item ->
+                when {
+                    options[item] == "Galeri" -> {
+                        val gallery = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI)
+                        startActivityForResult(gallery, pickImage)
+                    }
+                    options[item] == "Kamera" -> {
+                        val takePicture = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+                        startActivityForResult(takePicture, pickImage)
+                    }
+                }
+            }
+            builder.show()
         }
         val getValue = object : ValueEventListener {
             override fun onCancelled(databaseError: DatabaseError) {
@@ -119,7 +137,7 @@ class RegisterFragment : Fragment() {
             editor.apply()
 
             val getError = controlAllFields(email, name,surName, phoneNumber, startDate
-                ,endDate, userName, password, situation.valueOf(binding.gradOption.selectedItem.toString()),
+                ,endDate, userName, password,
                 photo, rePassword)
             if (!getError){
                 return@setOnClickListener
@@ -157,26 +175,6 @@ class RegisterFragment : Fragment() {
 
                 }
             )
-            /*database.child("users").child(userName).addListenerForSingleValueEvent(
-                object : ValueEventListener{
-                    override fun onDataChange(snapshot: DataSnapshot) {
-                        if(snapshot.exists()){
-                            toast.showMessage("Username is exists",false)
-                        }
-                        else{
-                            database.child("users").child(userName).setValue(person)
-                            toast.showMessage("Successfully Registered",true)
-                            findNavController().navigate(R.id.action_SecondFragment_to_FirstFragment)
-                        }
-                    }
-
-                    override fun onCancelled(error: DatabaseError) {
-
-                    }
-
-
-                }
-            )*/
 
 
 
@@ -189,9 +187,21 @@ class RegisterFragment : Fragment() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (resultCode == RESULT_OK && requestCode == pickImage) {
-            imageUri = data?.data
-            imageView.setImageURI(imageUri)
+
+        if (resultCode == RESULT_OK) {
+            when (requestCode) {
+                pickImage -> {
+                    // Kamera veya galeriden resim seçildi
+                    val imageUri = data?.data
+                    if (imageUri != null) {
+                        imageView.setImageURI(imageUri)
+                    } else {
+                        val extras = data?.extras
+                        val imageBitmap = extras?.get("data") as Bitmap
+                        imageView.setImageBitmap(imageBitmap)
+                    }
+                }
+            }
         }
     }
 
@@ -208,9 +218,9 @@ class RegisterFragment : Fragment() {
 
 
     private fun controlAllFields(
-        email: String?, name: String?, surName: String?,
+        email: String, name: String?, surName: String?,
         phoneNumber: String, startDate: String?, endDate: String?, userName: String,
-        password: String, situation: situation, photo: String?, rePassword: String
+        password: String, photo: String?, rePassword: String
     ): Boolean {
         var returnVal = true
 
@@ -228,7 +238,7 @@ class RegisterFragment : Fragment() {
             returnVal = false
         }
 
-        if (email?.length!!<5 || !android.util.Patterns.EMAIL_ADDRESS.matcher(email.toString()).matches()){
+        if (!EMAIL_REGEX.toRegex().matches(email)){
             eMailEditText.setError("Incorrect Mail")
             returnVal = false
         }
@@ -241,7 +251,7 @@ class RegisterFragment : Fragment() {
             val sdf = SimpleDateFormat("dd-MM-yyyy")
             val firstDate: Date = sdf.parse(startDate)
             val secondDate: Date = sdf.parse(endDate)
-            person = GraduatPerson(name,surName,email,phoneNumber, startDate, endDate, situation,userName,password,
+            person = GraduatPerson(name,surName,email,phoneNumber, startDate, endDate,userName,password,
                 photo)
             if (firstDate.after(secondDate) /*|| secondDate.after(today)*/){
                 startDateEditText.setError("Incorrect Date")

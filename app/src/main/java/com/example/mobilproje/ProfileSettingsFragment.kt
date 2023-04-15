@@ -2,6 +2,7 @@ package com.example.mobilproje
 
 import GraduatPerson
 import android.app.Activity
+import android.app.Activity.RESULT_OK
 import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.content.Context
@@ -30,7 +31,6 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
-import situation
 import java.io.ByteArrayOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
@@ -90,9 +90,24 @@ class ProfileSettingsFragment : Fragment() {
         imageView = binding.userPhoto
         initEditTexts()
         imageView.setOnClickListener {
-            val gallery = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI)
-            startActivityForResult(gallery, pickImage)
+            val options = arrayOf<CharSequence>("Galeri", "Kamera")
+            val builder = AlertDialog.Builder(contextThis)
+            builder.setTitle("Resim Seçin")
+            builder.setItems(options) { dialog, item ->
+                when {
+                    options[item] == "Galeri" -> {
+                        val gallery = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI)
+                        startActivityForResult(gallery, pickImage)
+                    }
+                    options[item] == "Kamera" -> {
+                        val takePicture = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+                        startActivityForResult(takePicture, pickImage)
+                    }
+                }
+            }
+            builder.show()
         }
+
 
         binding.startDateText.setOnClickListener {
             initDatePicker(binding.startDateText)
@@ -136,8 +151,7 @@ class ProfileSettingsFragment : Fragment() {
 
 
             val errorDetect = controlAllFields(email, name,surName, phoneNumber, startDate
-                ,endDate, currUserName, password, situation.valueOf(binding.gradOption.selectedItem.toString()),
-                byteArray)
+                ,endDate, currUserName, password, byteArray)
             if (!errorDetect){
                 return@setOnClickListener
             }
@@ -211,13 +225,26 @@ class ProfileSettingsFragment : Fragment() {
 }
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (resultCode == Activity.RESULT_OK && requestCode == pickImage) {
-            imageUri = data?.data
-            imageView.setImageURI(imageUri)
+
+        if (resultCode == RESULT_OK) {
+            when (requestCode) {
+                pickImage -> {
+                    // Kamera veya galeriden resim seçildi
+                    val imageUri = data?.data
+                    if (imageUri != null) {
+                        imageView.setImageURI(imageUri)
+                    } else {
+                        val extras = data?.extras
+                        val imageBitmap = extras?.get("data") as Bitmap
+                        imageView.setImageBitmap(imageBitmap)
+                    }
+                }
+            }
         }
     }
+
+
     private fun updateUser(i : DataSnapshot){
-        val situation = situation.valueOf((i.child("situation").getValue()).toString())
         user = GraduatPerson(
             email = i.child("email").getValue().toString(),
             name = i.child("name").getValue().toString(),
@@ -226,7 +253,6 @@ class ProfileSettingsFragment : Fragment() {
             phoneNumber = i.child("phoneNumber").getValue().toString(),
             startDate =  i.child("startDate").getValue().toString(),
             endDate =  i.child("endDate").getValue().toString(),
-            situation = situation,
             userName = i.child("userName").getValue().toString(),
             photo = i.child("photo").getValue().toString()
 
@@ -234,7 +260,6 @@ class ProfileSettingsFragment : Fragment() {
         initValues()
     }
     private fun initValues(){
-        binding.gradOption.setSelection(user.situation.ordinal)
         binding.emailText.setText(user.email)
         binding.userNameText.setText(user.userName)
         binding.nameText.setText(user.name)
@@ -248,9 +273,9 @@ class ProfileSettingsFragment : Fragment() {
 
 
     }
-    private fun controlAllFields(email : String?, name: String?, surName: String?,
+    private fun controlAllFields(email : String, name: String?, surName: String?,
                                  phoneNumber: String, startDate: String?, endDate: String?, userName: String,
-                                 password: String, situation: situation,photo: String?): Boolean {
+                                 password: String,photo: String?): Boolean {
         var returnVal = true
 
 
@@ -267,7 +292,7 @@ class ProfileSettingsFragment : Fragment() {
             returnVal = false
         }
 
-        if (email?.length!!<5 || !android.util.Patterns.EMAIL_ADDRESS.matcher(email.toString()).matches()){
+        if (!EMAIL_REGEX.toRegex().matches(email)){
             eMailEditText.setError("Incorrect Mail")
             returnVal = false
         }
@@ -280,7 +305,7 @@ class ProfileSettingsFragment : Fragment() {
             val sdf = SimpleDateFormat("dd-MM-yyyy")
             val firstDate: Date = sdf.parse(startDate)
             val secondDate: Date = sdf.parse(endDate)
-            user = GraduatPerson(name,surName,email,phoneNumber, startDate, endDate, situation,userName,password,
+            user = GraduatPerson(name,surName,email,phoneNumber, startDate, endDate,userName,password,
                 photo)
             if (firstDate.after(secondDate) /*|| secondDate.after(today)*/){
                 startDateEditText.setError("Incorrect Date")
