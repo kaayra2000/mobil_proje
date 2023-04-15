@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.os.Bundle
 import android.util.Base64
 import android.util.Log
 import android.view.LayoutInflater
@@ -21,20 +22,19 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.tasks.await
 
 
-class UserListAdapter(private val userList: List<FindPerson>, private val fragment: ListUserFragment) :
+class UserListAdapter(private val userList: List<FindPerson>, private val fragment: Fragment, private
+val parentUserName: String) :
 
     RecyclerView.Adapter<UserListAdapter.UserListViewHolder>() {
     lateinit var sharedPrefs : SharedPreferences
     val database = FirebaseDatabase.getInstance().reference
     lateinit var editor : SharedPreferences.Editor
     lateinit var userName: String
-    lateinit var customToast: CustomToast
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): UserListViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.user_item, parent, false)
         sharedPrefs = parent.context.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
         editor = sharedPrefs.edit()
-        userName = sharedPrefs.getString("username","").toString()
         return UserListViewHolder(view)
     }
 
@@ -59,10 +59,10 @@ class UserListAdapter(private val userList: List<FindPerson>, private val fragme
                     itemView.nameText.text = gradPerson?.name
                     itemView.currClassText.text = user.curClass
                     itemView.durationText.text = user.duration
-                    editor.putString("currUserName", user.userName)
-
+                    val bundle = bundleOf("userName" to user.userName, "parentUserName" to
+                    parentUserName)
                     itemView.imageView.setOnClickListener {
-                        fragment.findNavController().navigate(R.id.action_listUserFragment_to_partnerFragment)
+                        fragment.findNavController().navigate(R.id.action_listUserFragment_to_partnerFragment, bundle)
                     }
                 }
             } else {

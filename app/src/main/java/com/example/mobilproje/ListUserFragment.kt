@@ -21,6 +21,7 @@ class ListUserFragment : Fragment() {
     private lateinit var userListRecyclerView: RecyclerView
     private lateinit var userListProgressBar: ProgressBar
     val userList = mutableListOf<FindPerson>()
+    lateinit var userName: String
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -31,7 +32,7 @@ class ListUserFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
+        userName = requireArguments().getString("userName").toString()
         userListRecyclerView = view.findViewById(R.id.userListRecyclerView)
         userListProgressBar = view.findViewById(R.id.userListProgressBar)
         val layoutManager = LinearLayoutManager(context)
@@ -54,7 +55,7 @@ class ListUserFragment : Fragment() {
                         }
                     }
 
-                    val adapter = UserListAdapter(userList,this@ListUserFragment)
+                    val adapter = UserListAdapter(userList,this@ListUserFragment,userName)
                     userListRecyclerView.adapter = adapter
                 }
             }

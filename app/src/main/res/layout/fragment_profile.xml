@@ -77,7 +77,15 @@
                     android:textAllCaps="false"/>
 
             </LinearLayout>
+            <TextView
+                android:id="@+id/incomingRequestsText"
+                android:layout_width="wrap_content"
+                android:textColor="@color/black"
+                android:text="@string/incoming_requests"
+                android:layout_height="wrap_content"/>
         </LinearLayout>
+
     </ScrollView>
+    
 
 </layout>

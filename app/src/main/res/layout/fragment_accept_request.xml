@@ -6,7 +6,7 @@
     <TextView
         android:id="@+id/tv_name"
         android:layout_width="wrap_content"
-        android:text="@string/find_friend"
+        android:text="@string/accept_request"
         android:textSize="@dimen/sp_35"
         android:textColor="@color/black"
         android:layout_height="wrap_content"
@@ -86,11 +86,10 @@
             android:hint="@string/phoneNumber" />
 
         <Button
-            android:id="@+id/sendRequestButton"
+            android:id="@+id/acceptRequestButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-
-            android:text="@string/send_request"
+            android:text="@string/accept_request"
             android:textAllCaps="false"
             android:layout_marginHorizontal="8dp"/>
 

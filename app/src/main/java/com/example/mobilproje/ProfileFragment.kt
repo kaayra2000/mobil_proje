@@ -1,14 +1,12 @@
 package com.example.mobilproje
 
 import GraduatPerson
-import android.content.ContentValues.TAG
+import RequestDataClass
 import android.content.Context
 import android.content.SharedPreferences
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
-import android.net.Uri
 import android.os.Bundle
 import android.util.Base64
 import android.util.Log
@@ -18,12 +16,10 @@ import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.example.mobilproje.databinding.FragmentProfileBinding
-import com.example.mobilproje.databinding.FragmentProfileSettingsBinding
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
-import java.io.ByteArrayOutputStream
 
 // TODO: Rename parameter arguments, choose names that match
 
@@ -76,16 +72,38 @@ class ProfileFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         _binding = FragmentProfileBinding.inflate(inflater, container, false)
         userName = arguments?.getString("userName").toString()
-        var toast = CustomToast(context)
-
-
-
+        val toast = CustomToast(context)
+        getDataAndSetupAdapter()
         binding.navigateButton.setOnClickListener {
+            val bundle = bundleOf("userName" to userName)
+            findNavController().navigate(R.id.action_profile_to_homeScreen,bundle)
+        }
 
-            findNavController().navigate(R.id.action_profile_to_homeScreen)
+        binding.incomingRequestsText.setOnClickListener {
+            var myRef = database.child("requests").child("kamya123").ref
+            myRef.addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(dataSnapshot: DataSnapshot) {
+                    val request = dataSnapshot.getValue(RequestDataClass::class.java)
+                    if (dataSnapshot.exists() && request?.recieverUserName == userName) {
+                        // Gönderilecek verileri bir Bundle nesnesi içinde tutun
+                        val bundle = Bundle().apply {
+                            putString("applierUserName", userName)
+                            putString("senderUserName",request.senderUserName )
+                        }
+                        findNavController().navigate(R.id.action_profile_to_acceptRequestFragment, bundle)
+
+                    } else {
+                        toast.showMessage("Id not found",false)
+                        return
+                    }
+                }
+                override fun onCancelled(error: DatabaseError) {
+                    // Sorgu iptal edildi.
+                }
+            })
         }
 
         val callback = object : OnBackPressedCallback(true) {
@@ -173,6 +191,31 @@ class ProfileFragment : Fragment() {
             e.printStackTrace()
         }
         return null
+    }
+
+    private fun getDataAndSetupAdapter() {
+        var myRef = database.child("requests").ref
+        myRef.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                if (dataSnapshot.exists()) {
+
+                    for (requestSnapshot in dataSnapshot.children) {
+                        val request = requestSnapshot.getValue(RequestDataClass::class.java)
+                        request?.let {
+                            if(request.recieverUserName.equals(userName)){
+                                binding.incomingRequestsText.text = binding.incomingRequestsText.text.toString() + "\nId: " + request.senderUserName+
+                                        " Name: " + request.senderName
+                            }
+                        }
+                    }
+
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.d("ListUserFragment", "Verileri alma işlemi başarısız oldu.")
+            }
+        })
     }
 
 

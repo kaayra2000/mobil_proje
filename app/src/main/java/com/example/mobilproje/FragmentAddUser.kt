@@ -199,7 +199,7 @@ class FragmentAddUser : Fragment() {
         findPerson = FindPerson(
             department = department.text.toString(), curClass = currClass.text.toString(),
             duration = stayDuration.text.toString(), distance = distance.text.toString(),
-            lookingStatus = LookingStatus.values()[selectedIndex])
+            lookingStatus = LookingStatus.values()[selectedIndex], userName = userName)
 
         gradPerson.photo = imageBitmap
 

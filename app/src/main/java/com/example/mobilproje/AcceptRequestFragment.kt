@@ -3,14 +3,11 @@ package com.example.mobilproje
 import GraduatPerson
 import RequestDataClass
 import android.app.AlertDialog
-import android.content.ContentValues.TAG
-import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Canvas
 import android.net.Uri
 import android.os.Bundle
 import android.util.Base64
@@ -19,32 +16,22 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.EditText
 import android.widget.ImageView
-import kotlinx.coroutines.suspendCancellableCoroutine
 import android.widget.Spinner
 import android.widget.TextView
-import androidx.core.content.res.ResourcesCompat
-import androidx.core.os.bundleOf
-import androidx.lifecycle.lifecycleScope
-import androidx.navigation.fragment.findNavController
+import com.example.mobilproje.databinding.FragmentAcceptRequestBinding
+import com.example.mobilproje.databinding.FragmentLoginBinding
 import com.example.mobilproje.databinding.FragmentPartnerBinding
-import com.example.mobilproje.databinding.FragmentProfileBinding
-import com.example.mobilproje.databinding.FragmentProfileSettingsBinding
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
-import kotlinx.android.synthetic.main.toast_message.view.*
-import kotlinx.android.synthetic.main.user_item.view.*
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import java.io.ByteArrayOutputStream
-import java.net.URLEncoder
 
 
-class PartnerFragment : Fragment() {
-    private var _binding: FragmentPartnerBinding? = null
+class AcceptRequestFragment : Fragment() {
+    private var _binding: FragmentAcceptRequestBinding? = null
     private val binding get() = _binding!!
     private var findPerson: FindPerson? = null
     private var findPersonParent: FindPerson? = null
@@ -55,44 +42,52 @@ class PartnerFragment : Fragment() {
     lateinit var currClass  : TextView
     lateinit var stayDuration : TextView
     lateinit var distance : TextView
+    private var req : RequestDataClass? = null
     private var gradPerson: GraduatPerson? = null
     private var gradPersonParent: GraduatPerson? = null
     lateinit var email : TextView
     lateinit var phoneNumber : TextView
     lateinit var customToast: CustomToast
     lateinit var image : ImageView
-    lateinit var sharedPrefs : SharedPreferences
-    lateinit var editor : SharedPreferences.Editor
     lateinit var userName : String
     lateinit var parentUserName:String
 
 
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-        sharedPrefs = context.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
-        editor = sharedPrefs.edit()
-    }
-
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
+        inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View {
-        userName = requireArguments().getString("userName").toString()
-        parentUserName = requireArguments().getString("parentUserName").toString()
+    ): View? {
         customToast = CustomToast(context)
-        _binding = FragmentPartnerBinding.inflate(inflater, container, false)
+        _binding = FragmentAcceptRequestBinding.inflate(inflater, container, false)
         return binding.root
-    }
 
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         initEditTexts()
-        runBlocking {
+        val scope = CoroutineScope(Dispatchers.Main + Job())
+
+        scope.launch {
             initTexts()
         }
 
+        binding.acceptRequestButton.setOnClickListener {
+            AlertDialog.Builder(requireContext())
+                .setTitle("Confirmation")
+                .setMessage("Are you sure you want to accept this request?")
+                .setPositiveButton(android.R.string.ok) { _, _ ->
+                    findPerson?.lookingStatus = LookingStatus.NOT_LOOKING
+                    findPersonParent?.lookingStatus = LookingStatus.NOT_LOOKING
+                    database.child("persons").child(userName).setValue(findPerson)
+                    database.child("persons").child(parentUserName).setValue(findPersonParent)
+                    req?.isOkey = true
+                    database.child("requests").child(userName).setValue(req)
+                    customToast.showMessage("Successful",true)
+                }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
+        }
 
         email.setOnClickListener {
             val intent = Intent(Intent.ACTION_SENDTO).apply {
@@ -131,49 +126,7 @@ class PartnerFragment : Fragment() {
         }
 
 
-
-
-
-        binding.sendRequestButton.setOnClickListener {
-            if (parentUserName == userName) {
-                customToast.showMessage("You can't request yourself", false)
-                return@setOnClickListener
-            }
-            val userNameRef = database.child("persons").child(userName)
-
-            userNameRef.addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(dataSnapshot: DataSnapshot) {
-                    if (!dataSnapshot.exists()) {
-                        customToast.showMessage("You hasn't got a profile", false)
-                    }else{
-                        val request = RequestDataClass(parentUserName, userName, false,
-                        gradPersonParent!!.name)
-                        val builder = AlertDialog.Builder(context)
-                        builder.setTitle("Are you sure?")
-                        builder.setMessage("Do you want to send a request to $parentUserName?")
-                        builder.setPositiveButton("Yes") { dialog, which ->
-                            database.child("requests").child(parentUserName).setValue(request)
-                            customToast.showMessage("Request sent", true)
-                        }
-                        builder.setNegativeButton("No") { dialog, which ->
-                            customToast.showMessage("Request cancelled", false)
-                        }
-                        builder.show()
-
-                    }
-                }
-
-                override fun onCancelled(error: DatabaseError) {
-                }
-            })
-
-
-        }
-
-
-
     }
-
 
 
     private fun initEditTexts(){
@@ -184,6 +137,12 @@ class PartnerFragment : Fragment() {
         distance = binding.tvDistance
         stayDuration = binding.tvStayDuration
         email = binding.tvEmailInfo
+        arguments?.let {
+            userName = it.getString("senderUserName").toString()
+        }
+        arguments?.let {
+            parentUserName = it.getString("applierUserName").toString()
+        }
         phoneNumber = binding.tvPhoneInfo
         image = binding.profilePhoto
         status.isEnabled = false
@@ -207,6 +166,7 @@ class PartnerFragment : Fragment() {
         findPerson = database.child("persons").child(userName).get().await().getValue(FindPerson::class.java)
         gradPersonParent = database.child("users").child(parentUserName).get().await().getValue(GraduatPerson::class.java)
         findPersonParent = database.child("persons").child(parentUserName).get().await().getValue(FindPerson::class.java)
+        req = database.child("requests").child(userName).get().await().getValue(RequestDataClass::class.java)
         gradPerson?.let {
             if (it.photo != null) {
                 image.setImageBitmap(convertStringToBitmap(it.photo!!))
@@ -225,10 +185,5 @@ class PartnerFragment : Fragment() {
         }
 
     }
-
-
-
-
-
 
 }

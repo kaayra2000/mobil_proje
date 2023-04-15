@@ -17,3 +17,10 @@ data class GraduatPerson(
     var photo: String? = null
 ) : Serializable
 
+data class RequestDataClass(
+    var senderUserName: String = "",
+    var recieverUserName: String = "",
+    var isOkey: Boolean = false,
+    var senderName: String = ""
+) : Serializable
+

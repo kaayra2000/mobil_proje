@@ -56,6 +56,9 @@
         <action
             android:id="@+id/action_profile_to_homeScreen"
             app:destination="@id/homeScreen" />
+        <action
+            android:id="@+id/action_profile_to_acceptRequestFragment"
+            app:destination="@id/acceptRequestFragment" />
     </fragment>
 
     <fragment
@@ -86,4 +89,8 @@
         android:id="@+id/partnerFragment"
         android:name="com.example.mobilproje.PartnerFragment"
         android:label="PartnerFragment" />
+    <fragment
+        android:id="@+id/acceptRequestFragment"
+        android:name="com.example.mobilproje.AcceptRequestFragment"
+        android:label="AcceptRequestFragment" />
 </navigation>
