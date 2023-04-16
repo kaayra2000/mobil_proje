@@ -98,9 +98,11 @@ class MapFragment : Fragment() {
                 val markerOptions = MarkerOptions()
                     .position(LatLng(location.latitude, location.longitude))
                     .title(location.name)
+                    .zIndex(0.0F)
                     .snippet(location.surName)
                 if (location.userName == userName) {
                     markerOptions.title("You")
+                    markerOptions.zIndex(12.1F)
                     markerOptions.snippet("You are here!!!")
                     markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
                 }

@@ -73,17 +73,16 @@ class FragmentAddUser : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         _binding = FragmentAddUserBinding.inflate(inflater, container, false)
         userName = sharedPrefs.getString("username","").toString()
-
+        initEditTexts()
         return binding.root
     }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         toast = CustomToast(context)
-        initEditTexts()
         CoroutineScope(Dispatchers.Main).launch {
             setPerson()
         }
@@ -189,7 +188,6 @@ class FragmentAddUser : Fragment() {
             name.setText(gradPerson.name)
             email.setText(gradPerson.email)
             phoneNumber.setText(gradPerson.phoneNumber)
-            image.setImageBitmap(convertStringToBitmap(gradPerson.photo.toString()))
         }
 
     }
@@ -273,11 +271,8 @@ class FragmentAddUser : Fragment() {
                 email.setText(gradPerson.email)
                 phoneNumber.setText(gradPerson.phoneNumber)
                 imageBitmap = gradPerson.photo.toString()
-                image.setImageBitmap(gradPerson.photo?.let { it1 -> convertStringToBitmap(it1) })
-                if(gradPerson.photo == null || gradPerson.photo!!.length < 5){
-                    imageBitmap = ppString()
-                    image.setImageBitmap(convertStringToBitmap(imageBitmap!!))
-                }
+                if(gradPerson.photo != null && gradPerson.photo!!.length > 5)
+                    image.setImageBitmap(gradPerson.photo?.let { it1 -> convertStringToBitmap(it1) })
 
             }
         }

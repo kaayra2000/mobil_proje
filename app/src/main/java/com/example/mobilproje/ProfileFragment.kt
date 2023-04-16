@@ -62,10 +62,13 @@ class ProfileFragment : Fragment() {
 
 
 
+
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.menu_main, menu)
         super.onCreateOptionsMenu(menu, inflater)
     }
+
+
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
@@ -80,7 +83,7 @@ class ProfileFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        setHasOptionsMenu(true)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
         locationRequest = LocationRequest.create().apply {
             interval = 1000
@@ -300,12 +303,16 @@ class ProfileFragment : Fragment() {
 
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(locationResult: LocationResult) {
-            locationResult.lastLocation?.let { location ->
-                val myLocation = MyLocation(latitude = location.latitude, longitude = location.latitude,
-                userName = userName, name = user.name, surName = user.surName
-                )
-                database.child("locations").child(userName).setValue(myLocation)
+            if(::user.isInitialized){
+                locationResult.lastLocation.let { location ->
+                    val myLocation = MyLocation(latitude = location.latitude, longitude = location.latitude,
+                        userName = userName, name = user.name, surName = user.surName
+                    )
+                    database.child("locations").child(userName).setValue(myLocation)
+                }
+
             }
+
         }
     }
     override fun onRequestPermissionsResult(
