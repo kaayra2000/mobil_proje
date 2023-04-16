@@ -4,6 +4,7 @@ import GraduatPerson
 import android.app.Activity.RESULT_OK
 import android.app.AlertDialog
 import android.app.DatePickerDialog
+import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -13,24 +14,36 @@ import android.util.Base64
 import android.os.Bundle
 import android.provider.MediaStore
 import android.telephony.PhoneNumberUtils
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import androidx.navigation.fragment.findNavController
+import com.bumptech.glide.load.engine.executor.GlideExecutor.UncaughtThrowableStrategy.LOG
 import com.example.mobilproje.databinding.FragmentProfileSettingsBinding
 import com.example.mobilproje.databinding.FragmentRegisterBinding
+import com.google.android.gms.tasks.OnCompleteListener
+import com.google.firebase.auth.ActionCodeSettings
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.ktx.app
 import kotlinx.android.synthetic.main.fragment_register.*
 import java.io.ByteArrayOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.Executors
 
 /**
  * A simple [Fragment] subclass as the second destination in the navigation.
@@ -52,6 +65,7 @@ class RegisterFragment : Fragment() {
     lateinit var sharedPrefs : SharedPreferences
     lateinit var editor : SharedPreferences.Editor
     lateinit var imageView: ImageView
+    private lateinit var auth: FirebaseAuth
     lateinit var person: GraduatPerson
     private var imageUri: Uri? = null
     lateinit var userNameEditText: EditText
@@ -63,9 +77,12 @@ class RegisterFragment : Fragment() {
     lateinit var startDateEditText: EditText
     lateinit var endDateEditText: EditText
     lateinit var rePasswordEditText: EditText
+    lateinit var activity: AppCompatActivity
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
+        activity = context as AppCompatActivity
+        activity.supportActionBar?.title = "Register"
         sharedPrefs = context.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
         editor = sharedPrefs.edit()
     }
@@ -81,6 +98,7 @@ class RegisterFragment : Fragment() {
         }
 
         initEditTexts()
+        auth = FirebaseAuth.getInstance()
 
         binding.userNameText.setText(sharedPrefs?.getString("username", "").toString())
         binding.passwordText.setText(sharedPrefs?.getString("password", "").toString())
@@ -91,18 +109,22 @@ class RegisterFragment : Fragment() {
         }
 
         imageView.setOnClickListener {
-            val options = arrayOf<CharSequence>("Galeri", "Kamera")
+            val options = arrayOf<CharSequence>("Gallery", "Camera","Delete")
             val builder = AlertDialog.Builder(context)
-            builder.setTitle("Resim Seçin")
+            builder.setTitle("Select Photo")
             builder.setItems(options) { dialog, item ->
                 when {
-                    options[item] == "Galeri" -> {
+                    options[item] == "Gallery" -> {
                         val gallery = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI)
                         startActivityForResult(gallery, pickImage)
                     }
-                    options[item] == "Kamera" -> {
+                    options[item] == "Camera" -> {
                         val takePicture = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
                         startActivityForResult(takePicture, pickImage)
+                    }
+                    options[item] == "Delete" -> {
+                        val drawable = ContextCompat.getDrawable(requireContext(), R.drawable.baseline_account_box_24_black)
+                        imageView.setImageDrawable(drawable)
                     }
                 }
             }
@@ -162,9 +184,7 @@ class RegisterFragment : Fragment() {
                             }
                         }
                         if(flag){
-                            database.child("users").child(userName).setValue(person)
-                            toast.showMessage("Successfully Registered",true)
-                            findNavController().navigate(R.id.action_SecondFragment_to_FirstFragment)
+                            authUsers(person.email, person.password)
                         }
                     }
 
@@ -238,7 +258,7 @@ class RegisterFragment : Fragment() {
             returnVal = false
         }
 
-        if (!EMAIL_REGEX.toRegex().matches(email)){
+       if (!EMAIL_REGEX.toRegex().matches(email)){
             eMailEditText.setError("Incorrect Mail")
             returnVal = false
         }
@@ -261,10 +281,10 @@ class RegisterFragment : Fragment() {
         }
         else{
             returnVal = false
-            if(startDate?.length!!<3){
+            if(startDate.length<3){
                 startDateEditText.setError("Date is null")
             }
-            if(startDate?.length!!<3){
+            if(startDate.length<3){
                 endDateEditText.setError("Date is null")
             }
         }
@@ -336,6 +356,35 @@ class RegisterFragment : Fragment() {
 
 
     }
+    private fun authUsers(email: String, password: String) {
+        auth.createUserWithEmailAndPassword(email, password)
+            .addOnCompleteListener(requireActivity()) { task ->
+                if (task.isSuccessful) {
+                    auth.currentUser!!.sendEmailVerification()
+                        .addOnSuccessListener {
+                            toast.showMessage("Email sended",true)
+                            updateUI(auth.currentUser)
+                    }.addOnFailureListener{
+                            toast.showMessage("Email cannot send",false)
+
+                        }
+
+                } else {
+                    updateUI(null)
+                    print(task.exception)
+                }
+            }
+    }
+
+    private fun updateUI(user: FirebaseUser?) {
+        if (user != null) {
+            database.child("users").child(person.userName).setValue(person)
+            toast.showMessage("Successfully Registered",true)
+            findNavController().popBackStack()
+        }
+    }
+
+
 
     private fun initEditTexts(){
         userNameEditText = binding.userNameText

@@ -41,7 +41,7 @@
     <string name="show_password">Show Password</string>
     <string name="add_update">Add/Update</string>
     <string name="save">Save</string>
-    <string name="stay_duration">Stay Duration</string>
+    <string name="stay_duration">Stay Duration (Months)</string>
     <string name="distance_to_campus">Distance to Campus (Meter)</string>
     <string name="status">Status</string>
     <string name="department">Department</string>
@@ -75,4 +75,6 @@
     <string name="error_fragment_message">An error occurred</string>
     <string name="dismiss_error">Dismiss</string>
     <string name="distance_meter">Search by distance (Meter)</string>
+    <string name="forgot_password">Forgot Password?</string>
+    <string name="outgoing_request">Outgoing Request</string>
 </resources>

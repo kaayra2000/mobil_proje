@@ -10,8 +10,10 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
+import android.graphics.drawable.VectorDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -23,10 +25,12 @@ import androidx.fragment.app.Fragment
 import android.widget.EditText
 import android.widget.ImageView
 import androidx.activity.OnBackPressedCallback
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.navigation.fragment.findNavController
 import com.example.mobilproje.databinding.FragmentProfileBinding
 import com.example.mobilproje.databinding.FragmentProfileSettingsBinding
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
@@ -56,9 +60,12 @@ class ProfileSettingsFragment : Fragment() {
     lateinit var phoneNumberEditText: EditText
     lateinit var startDateEditText: EditText
     lateinit var endDateEditText: EditText
+    lateinit var activity: AppCompatActivity
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
+        activity = context as AppCompatActivity
+        activity.supportActionBar?.title = "Private Profile Settings"
         sharedPrefs = context.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
         editor = sharedPrefs.edit()
 
@@ -90,19 +97,24 @@ class ProfileSettingsFragment : Fragment() {
         imageView = binding.userPhoto
         initEditTexts()
         imageView.setOnClickListener {
-            val options = arrayOf<CharSequence>("Galeri", "Kamera")
-            val builder = AlertDialog.Builder(contextThis)
-            builder.setTitle("Resim Seçin")
+            val options = arrayOf<CharSequence>("Gallery", "Camera","Delete")
+            val builder = AlertDialog.Builder(context)
+            builder.setTitle("Select Photo")
             builder.setItems(options) { dialog, item ->
                 when {
-                    options[item] == "Galeri" -> {
+                    options[item] == "Gallery" -> {
                         val gallery = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI)
                         startActivityForResult(gallery, pickImage)
                     }
-                    options[item] == "Kamera" -> {
+                    options[item] == "Camera" -> {
                         val takePicture = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
                         startActivityForResult(takePicture, pickImage)
                     }
+                    options[item] == "Delete" -> {
+                        val drawable = ContextCompat.getDrawable(requireContext(), R.drawable.baseline_account_box_24_black)
+                        imageView.setImageDrawable(drawable)
+                    }
+
                 }
             }
             builder.show()
@@ -182,11 +194,20 @@ class ProfileSettingsFragment : Fragment() {
                                 }
 
                                 if(flag){
-                                    database.child("users").child(currUserName).setValue(user)
+
                                     val tmp = userName
                                     userName =  currUserName
+                                    val userfirebase = FirebaseAuth.getInstance().currentUser
+                                    userfirebase?.updatePassword(user.password)
+                                        ?.addOnCompleteListener { task ->
+                                            if (task.isSuccessful) {
+                                                database.child("users").child(currUserName).setValue(user)
+                                                toast.showMessage("Successfully Updated",true)
+                                            } else {
+                                                toast.showMessage("Failed",false)
+                                            }
+                                        }
                                     tmp?.let { it1 -> database.child("users").child(it1).removeValue() }
-                                    toast.showMessage("Successfully Updated",true)
                                     editor.putString("username", currUserName)
                                     editor.putString("password", password)
                                     editor.apply()
@@ -202,14 +223,21 @@ class ProfileSettingsFragment : Fragment() {
                         }
                 )
             }else{
-                database.child("users").child(currUserName).setValue(user)
-                val toast = CustomToast(context)
-                toast.setMessage("Successfully Updated")
-                toast.setSuccessColor()
-                toast.show()
-                editor.putString("username", currUserName)
-                editor.putString("password", password)
-                editor.apply()
+
+                val userfirebase = FirebaseAuth.getInstance().currentUser
+                userfirebase?.updatePassword(password)
+                    ?.addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            database.child("users").child(currUserName).setValue(user)
+                            toast.showMessage("Successfully Updated",true)
+                            editor.putString("username", currUserName)
+                            editor.putString("password", password)
+                            editor.apply()
+                        } else {
+                            toast.showMessage("Failed",false)
+                        }
+                    }
+
             }
 
 
@@ -292,10 +320,10 @@ class ProfileSettingsFragment : Fragment() {
             returnVal = false
         }
 
-        if (!EMAIL_REGEX.toRegex().matches(email)){
+        /*if (!EMAIL_REGEX.toRegex().matches(email)){
             eMailEditText.setError("Incorrect Mail")
             returnVal = false
-        }
+        }*/
 
         if (!PhoneNumberUtils.isGlobalPhoneNumber(phoneNumber)){
             phoneNumberEditText.setError("Incorrect Phone Number")
@@ -374,11 +402,24 @@ class ProfileSettingsFragment : Fragment() {
     fun convertBitmap(drawable: Drawable?) : String? {
         if(drawable==null)
             return null
-        val bitmap = (drawable as BitmapDrawable).bitmap   ?: return null
-        val outputStream = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
-        val bytes = outputStream.toByteArray()
-        return Base64.encodeToString(bytes, Base64.DEFAULT)
+        try {
+            val bitmap = (drawable as BitmapDrawable).bitmap   ?: return null
+            val outputStream = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+            val bytes = outputStream.toByteArray()
+            return Base64.encodeToString(bytes, Base64.DEFAULT)
+        }catch (e : Exception){
+            val vectorDrawable = drawable as VectorDrawable
+            val bitmap = Bitmap.createBitmap(vectorDrawable.intrinsicWidth, vectorDrawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(bitmap)
+            vectorDrawable.setBounds(0, 0, canvas.width, canvas.height)
+            vectorDrawable.draw(canvas)
+            val outputStream = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+            val bytes = outputStream.toByteArray()
+            return Base64.encodeToString(bytes, Base64.DEFAULT)
+        }
+
 
     }
 

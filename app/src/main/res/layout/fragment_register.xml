@@ -15,7 +15,7 @@
                 android:layout_height="36dp"
                 android:layout_gravity="right"
                 android:layout_marginTop="@dimen/dpp_12"
-                android:background="@drawable/rounded_bg"
+                android:background="@drawable/baseline_account_box_24_black"
                 android:layout_marginRight="@dimen/dpp_12"
                 android:id="@+id/userPhoto" />
             <EditText

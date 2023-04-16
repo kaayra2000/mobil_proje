@@ -31,6 +31,7 @@ class ListUserFragment : Fragment() {
     private lateinit var spinner: Spinner
     val userList = mutableListOf<FindPerson>()
     private var option = 0
+    var textQuery = ""
     val userListCopy = mutableListOf<FindPerson>()
     lateinit var userName: String
 
@@ -59,6 +60,7 @@ class ListUserFragment : Fragment() {
                 lifecycleScope.launch {
                     filter(newText)
                 }
+                textQuery = newText
                 return true
             }
         })
@@ -66,6 +68,9 @@ class ListUserFragment : Fragment() {
         spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 option = position
+                lifecycleScope.launch {
+                    filter(textQuery)
+                }
                 // selectedValue değişkeni seçilen değere karşılık gelen indis ile güncellenir
             }
 

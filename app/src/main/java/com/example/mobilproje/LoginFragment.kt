@@ -2,17 +2,24 @@ package com.example.mobilproje
 
 import GraduatPerson
 import android.annotation.SuppressLint
+import android.app.AlertDialog
 
 import android.content.Context
 import android.content.SharedPreferences
 import kotlinx.coroutines.*
 
 import android.os.Bundle
+import android.text.InputType
 
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
+import android.widget.Button
+import android.widget.EditText
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.os.bundleOf
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -39,15 +46,20 @@ class LoginFragment : Fragment() {
     lateinit var editor : SharedPreferences.Editor
     lateinit var userName: String
     lateinit var toast: CustomToast
+    private lateinit var auth: FirebaseAuth
     val database = FirebaseDatabase.getInstance().reference
     lateinit var password: String
     var loginFlag = true
+    lateinit var activity: AppCompatActivity
     private val binding get() = _binding!!
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
+        activity = requireActivity() as AppCompatActivity
+        activity.supportActionBar?.title = "Login"
         sharedPrefs = context.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
         editor = sharedPrefs.edit()
+        auth = FirebaseAuth.getInstance()
     }
 
 
@@ -73,27 +85,73 @@ class LoginFragment : Fragment() {
             findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment)
         }
 
+
         loginFlag = sharedPrefs.getBoolean("loginFlag", false)
         binding.userNameText.setText(sharedPrefs.getString("username", "").toString())
         binding.passwordText.setText(sharedPrefs.getString("password", "").toString())
         userName = binding.userNameText.text.toString()
         password = binding.passwordText.text.toString()
 
-        lifecycleScope.launch {
-            binding.loginButton.isEnabled = false
-            binding.progressBar.visibility = View.VISIBLE
-            val snapshot = database.child("users").child(sharedPrefs.getString("username", "").toString()).get().await()
-            if(snapshot.exists()){
-                if(snapshot.child("password").getValue().toString().equals(sharedPrefs?.getString("password", "").toString())
-                    && loginFlag){
+        binding.forgotPasswordText.setOnClickListener {
+            val builder = AlertDialog.Builder(requireContext())
+            builder.setTitle("Forgot Password")
+            builder.setMessage("Please enter your email address to reset your password:")
 
-                    val bundle = bundleOf("userName" to sharedPrefs.getString("username", "").toString())
-                    findNavController().navigate(R.id.action_FirstFragment_to_profileSettings,bundle)
+            val input = EditText(requireContext())
+            input.inputType = InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+            builder.setView(input)
+
+            builder.setPositiveButton("Reset Password") { _, _ ->
+                val email = input.text.toString()
+                if (email.isEmpty()) {
+                    Toast.makeText(requireContext(), "Please enter your email address", Toast.LENGTH_SHORT).show()
+                } else {
+                    auth.sendPasswordResetEmail(email).addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            toast.showMessage("Password reset email sent to $email", true)
+                        } else {
+                            toast.showMessage("Failed to send password reset email", false)
+                        }
+                    }
                 }
             }
-            binding.progressBar.visibility = View.GONE
-            binding.loginButton.isEnabled = true
+
+            builder.setNegativeButton("Cancel") { dialog, _ -> dialog.cancel() }
+
+            val dialog = builder.create()
+            dialog.show()
+
+            // Klavyeyi açmak için bu satırı ekleyin
+            input.requestFocus()
+            val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0)
         }
+
+
+
+        lifecycleScope.launch {
+
+            changeEnabled()
+            binding.progressBar.visibility = View.VISIBLE
+
+            try {
+                val snapshot = database.child("users").child(sharedPrefs.getString("username", "").toString()).get().await()
+                if(snapshot.exists()){
+                    if(loginFlag){
+                        var graduatPerson = initNullGradPerson()
+                        snapshot.getValue(GraduatPerson::class.java)?.let {graduatPerson  = it }
+                        graduatPerson.password = sharedPrefs.getString("password","").toString()
+                        checkIfUserExists(graduatPerson)
+                    }
+                }
+            } catch (e: Exception) {
+                // handle exception
+            } finally {
+                binding.progressBar.visibility = View.GONE
+                changeEnabled()
+            }
+        }
+
 
 
 
@@ -104,38 +162,23 @@ class LoginFragment : Fragment() {
             userName = binding.userNameText.text.toString()
             password = binding.passwordText.text.toString()
             lifecycleScope.launch {
-                getUserData()
-                val currUser = control(userName, password)
+                val currUser = database.child("users").
+                    child(userName).get().await().getValue(GraduatPerson::class.java)
+
                 if(currUser!=null){
-                    toast.showMessage("Successfully Logged In", true)
-                    editor.putString("username", userName)
-                    editor.putString("password", password)
-                    editor.putBoolean("loginFlag",true)
-                    editor.apply()
-                    val bundle = bundleOf("userName" to userName)
-                    findNavController().navigate(R.id.action_FirstFragment_to_profileSettings,bundle)
-                    toast.show()
+                    currUser.password = password
+                    checkIfUserExists(currUser)
                 }
             }
         }
 
     }
 
-    @SuppressLint("SuspiciousIndentation")
-    private suspend fun control(userName: String, password: String): GraduatPerson?{
-        val i = user
-        if(i.userName.equals(userName)){
-            if(i.password.equals(password)){
-                return i
-            }
-
-            else
-                toast.showMessage("Username and Password don't match",false)
-                return null
-        }
-        toast.showMessage("Username not found",false)
-        return null
+    override fun onResume() {
+        super.onResume()
+        activity.supportActionBar?.title = "Login"
     }
+
     private fun initNullGradPerson() :  GraduatPerson{
         return GraduatPerson(
             email = "",
@@ -151,43 +194,50 @@ class LoginFragment : Fragment() {
         )
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    suspend fun getUserData(): GraduatPerson = suspendCancellableCoroutine { continuation ->
-        val valueEventListener = object : ValueEventListener {
-            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                if (dataSnapshot.exists()) {
-                    val i = dataSnapshot
-                    user = GraduatPerson(
-                        email = i.child("email").getValue().toString(),
-                        name = i.child("name").getValue().toString(),
-                        surName = i.child("surName").getValue().toString(),
-                        password = i.child("password").getValue().toString(),
-                        phoneNumber = i.child("phoneNumber").getValue().toString(),
-                        startDate = i.child("startDate").getValue().toString(),
-                        endDate = i.child("endDate").getValue().toString(),
-                        userName = i.child("userName").getValue().toString(),
-                        photo = i.child("photo").getValue().toString()
-                    )
-                    continuation.resume(user) {}
-                } else {
-                    user = initNullGradPerson()
-                    continuation.resume(user) {}
+
+private fun checkIfUserExists(graduatPerson: GraduatPerson) {
+    if (graduatPerson.email.length > 6 && graduatPerson.password.length >6){
+    auth.signInWithEmailAndPassword(graduatPerson.email, graduatPerson.password).addOnCompleteListener { task ->
+        if (task.isSuccessful) {
+                val user = auth.currentUser
+                if(user!!.isEmailVerified){
+
+                    try {
+                        database.child("users").child(userName).setValue(graduatPerson)
+                        toast.showMessage("Successfully Logged In", true)
+                        editor.putString("username", userName)
+                        editor.putString("password", password)
+                        editor.putBoolean("loginFlag",true)
+                        editor.apply()
+                        val bundle = bundleOf("userName" to userName)
+                        findNavController().navigate(R.id.action_FirstFragment_to_profileSettings,bundle)
+                    }catch (e: java.lang.Exception){
+                        toast.showMessage("Error",false)
+                    }
+
+                }
+                else{
+                    user.sendEmailVerification()
+                    toast.showMessage("Email not verified",false)
                 }
             }
-
-            override fun onCancelled(databaseError: DatabaseError) {
-                continuation.resumeWithException(databaseError.toException())
-            }
+        else{
+            toast.showMessage("Username and password not match",false)
         }
-
-        database.child("users").child(userName).addListenerForSingleValueEvent(valueEventListener)
-
-        continuation.invokeOnCancellation {
-            database.child("users").child(userName).removeEventListener(valueEventListener)
-        }
+        }}
+    else{
+        toast.showMessage("Short mail or password",false)
     }
+}
 
-
+    private fun changeEnabled(){
+        val bool = !binding.loginButton.isEnabled
+        binding.loginButton.isEnabled = bool
+        binding.passwordText.isEnabled = bool
+        binding.forgotPasswordText.isClickable = bool
+        binding.registerButton.isEnabled = bool
+        binding.userNameText.isEnabled = bool
+    }
 
 
 

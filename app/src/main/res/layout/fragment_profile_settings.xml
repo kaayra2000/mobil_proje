@@ -20,7 +20,7 @@
                 android:layout_marginTop="@dimen/dpp_12"
                 android:layout_marginRight="@dimen/dpp_12"
                 android:id="@+id/userPhoto"
-                android:background="@drawable/rounded_bg"/>
+                android:background="@drawable/baseline_account_box_24_black"/>
 
             <EditText
                 android:id="@+id/userNameText"
@@ -59,6 +59,7 @@
 
             <EditText
                 android:id="@+id/emailText"
+                android:enabled="false"
                 style="@style/EditTextStyle"
                 android:drawableLeft="@drawable/baseline_email_24"
                 android:layout_marginVertical="@dimen/verticalText"

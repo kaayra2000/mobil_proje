@@ -33,7 +33,7 @@
         <TextView
             android:id="@+id/tv_department"
             android:layout_width="match_parent"
-            android:drawableLeft="@drawable/baseline_arrow_forward_24"
+            android:drawableLeft="@drawable/baseline_business_center_24"
             style="@style/EditTextStyle"
             android:layout_height="wrap_content"
             android:hint="@string/department" />
@@ -41,7 +41,7 @@
         <TextView
             android:id="@+id/tv_class"
             style="@style/EditTextStyle"
-            android:drawableLeft="@drawable/baseline_check_circle_24"
+            android:drawableLeft="@drawable/baseline_edit_24"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/student_class" />

@@ -98,7 +98,7 @@
                     android:textColor="@color/black"
                     android:layout_gravity="center"
                     android:gravity="center"
-                    android:text="Outgoing Requests"
+                    android:text="@string/outgoing_request"
                     android:layout_height="wrap_content"/>
 
             </LinearLayout>

@@ -154,6 +154,7 @@ class PartnerFragment : Fragment() {
                         builder.setPositiveButton("Yes") { dialog, which ->
                             database.child("requests").child(parentUserName).setValue(request)
                             customToast.showMessage("Request sent", true)
+                            binding.sendRequestButton.isEnabled = false
                         }
                         builder.setNegativeButton("No") { dialog, which ->
                             customToast.showMessage("Request cancelled", false)

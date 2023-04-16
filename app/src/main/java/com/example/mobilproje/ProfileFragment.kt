@@ -22,6 +22,7 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
@@ -33,6 +34,7 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import kotlinx.android.synthetic.main.activity_main.*
 
 // TODO: Rename parameter arguments, choose names that match
 
@@ -49,11 +51,14 @@ class ProfileFragment : Fragment() {
     lateinit var user: GraduatPerson
     private var backPressedTime = Long.MIN_VALUE
     lateinit var sharedPrefs : SharedPreferences
+    lateinit var activity: AppCompatActivity
     lateinit var editor : SharedPreferences.Editor
 
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
+        activity = context as AppCompatActivity
+        activity.supportActionBar?.title = "Profile"
         sharedPrefs = context.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
         editor = sharedPrefs.edit()
     }
@@ -180,12 +185,21 @@ class ProfileFragment : Fragment() {
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, callback)
 
         binding.exitButton.setOnClickListener {
-            editor.putString("username", "")
-            editor.putString("password", "")
-            editor.putBoolean("loginFlag", false)
-            editor.apply()
-            findNavController().navigate(R.id.action_profileSettings_to_FirstFragment)
+            val alertDialogBuilder = AlertDialog.Builder(requireContext())
+            alertDialogBuilder.setMessage("Are you sure you want to exit?")
+            alertDialogBuilder.setPositiveButton("Yes") { _, _ ->
+                editor.putString("username", "")
+                editor.putString("password", "")
+                editor.putBoolean("loginFlag", false)
+                editor.apply()
+                findNavController().navigate(R.id.action_profileSettings_to_FirstFragment)
+            }
+            alertDialogBuilder.setNegativeButton("No") { dialog, _ ->
+                dialog.dismiss()
+            }
+            alertDialogBuilder.create().show()
         }
+
 
         val getValue = object : ValueEventListener {
             override fun onCancelled(databaseError: DatabaseError) {
@@ -207,6 +221,7 @@ class ProfileFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
+        activity.supportActionBar?.title = "Profile"
         userName = sharedPrefs.getString("username","").toString()
         startLocationUpdates()
     }
@@ -231,7 +246,7 @@ class ProfileFragment : Fragment() {
     }
     private fun initValues(){
 
-        user?.let {
+        user.let {
             binding.nameText.setText(user.name)
             binding.surNameText.setText(user.surName)
             binding.startDateText.setText(user.startDate)
@@ -264,8 +279,12 @@ class ProfileFragment : Fragment() {
                         val request = requestSnapshot.getValue(RequestDataClass::class.java)
                         request?.let {
                             if(request.recieverUserName.equals(userName)){
+                                if(!request.isOkey)
                                 binding.incomingRequestsText.text = binding.incomingRequestsText.text.toString() + "\nId: " + request.senderUserName+
                                         " Name: " + request.senderName
+                                else
+                                    binding.incomingRequestsText.text = "Accepted Request" + "\nId: " + request.senderUserName+
+                                            " Name: " + request.senderName
                             }
                             else if(request.senderUserName.equals(userName)){
                                 binding.outgoingRequestsText.text = binding.outgoingRequestsText.text.toString() + "\nId: " + request.senderUserName+

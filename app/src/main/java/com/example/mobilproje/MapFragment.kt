@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.SearchView
 import kotlin.math.*
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.clearFragmentResult
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.SupportMapFragment
@@ -142,6 +143,8 @@ class MapFragment : Fragment() {
     private fun Double.toRadians(): Double {
         return this * Math.PI / 180
     }
+
+
 
 
 

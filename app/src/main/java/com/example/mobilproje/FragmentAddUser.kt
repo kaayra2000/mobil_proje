@@ -25,7 +25,9 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.Spinner
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
+import androidx.core.graphics.drawable.toDrawable
 import androidx.navigation.fragment.findNavController
 import com.example.mobilproje.databinding.FragmentAddUserBinding
 import com.example.mobilproje.databinding.FragmentHomeScreenBinding
@@ -127,19 +129,24 @@ class FragmentAddUser : Fragment() {
 
 
         image.setOnClickListener {
-            val options = arrayOf<CharSequence>("Galeri", "Kamera")
+            val options = arrayOf<CharSequence>("Gallery", "Camera","Delete")
             val builder = AlertDialog.Builder(context)
-            builder.setTitle("Resim Seçin")
+            builder.setTitle("Select Photo")
             builder.setItems(options) { dialog, item ->
                 when {
-                    options[item] == "Galeri" -> {
+                    options[item] == "Gallery" -> {
                         val gallery = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI)
                         startActivityForResult(gallery, pickImage)
                     }
-                    options[item] == "Kamera" -> {
+                    options[item] == "Camera" -> {
                         val takePicture = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
                         startActivityForResult(takePicture, pickImage)
                     }
+                    options[item] == "Delete" -> {
+                        val drawable = ContextCompat.getDrawable(requireContext(), R.drawable.baseline_account_box_24_black)
+                        image.setImageDrawable(drawable)
+                    }
+
                 }
             }
             builder.show()

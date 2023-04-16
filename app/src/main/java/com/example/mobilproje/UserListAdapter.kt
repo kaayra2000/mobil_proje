@@ -56,9 +56,9 @@ val parentUserName: String) :
                 gradPerson = dataSnapshot.getValue(GraduatPerson::class.java)!!
                 withContext(Dispatchers.Main) {
                     itemView.imageView.setImageBitmap(gradPerson?.photo?.let { convertStringToBitmap(it) })
-                    itemView.nameText.text = gradPerson?.name
-                    itemView.currClassText.text = user.curClass
-                    itemView.durationText.text = user.duration
+                    itemView.nameText.text = "Name: " + gradPerson?.name
+                    itemView.currClassText.text = "Class: " + user.curClass
+                    itemView.durationText.text = "Duration: " +  user.duration
                     val bundle = bundleOf("userName" to user.userName, "parentUserName" to
                     parentUserName)
                     itemView.imageView.setOnClickListener {

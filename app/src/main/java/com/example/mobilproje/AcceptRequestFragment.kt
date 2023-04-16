@@ -19,6 +19,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.Spinner
 import android.widget.TextView
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.mobilproje.databinding.FragmentAcceptRequestBinding
 import com.example.mobilproje.databinding.FragmentLoginBinding
@@ -82,12 +83,16 @@ class AcceptRequestFragment : Fragment() {
                     findPersonParent?.lookingStatus = LookingStatus.NOT_LOOKING
                     database.child("persons").child(userName).setValue(findPerson)
                     database.child("persons").child(parentUserName).setValue(findPersonParent)
-                    req?.isOkey = true
-                    database.child("requests").child(userName).setValue(req)
+                    lifecycleScope.launch {
+                        rejectAllRequests()
+                    }
+                    binding.acceptRequestButton.isEnabled = false
+                    binding.declineRequestButton.isEnabled = false
                     customToast.showMessage("Successful",true)
                 }
                 .setNegativeButton(android.R.string.cancel, null)
                 .show()
+
         }
 
         binding.declineRequestButton.setOnClickListener {
@@ -182,6 +187,10 @@ class AcceptRequestFragment : Fragment() {
         gradPersonParent = database.child("users").child(parentUserName).get().await().getValue(GraduatPerson::class.java)
         findPersonParent = database.child("persons").child(parentUserName).get().await().getValue(FindPerson::class.java)
         req = database.child("requests").child(userName).get().await().getValue(RequestDataClass::class.java)
+        if (req!!.isOkey){
+            binding.declineRequestButton.isEnabled = false
+            binding.acceptRequestButton.isEnabled = false
+        }
         gradPerson?.let {
             if (it.photo != null) {
                 image.setImageBitmap(convertStringToBitmap(it.photo!!))
@@ -198,6 +207,24 @@ class AcceptRequestFragment : Fragment() {
             currClass.text = (it.curClass)
             stayDuration.text = (it.duration)
         }
+
+    }
+    private suspend fun rejectAllRequests(){
+            val dataSnapshot = database.child("requests").get().await()
+            if (dataSnapshot.exists()) {
+                for (requestSnapshot in dataSnapshot.children) {
+                    val request = requestSnapshot.getValue(RequestDataClass::class.java)
+                    if(request!!.recieverUserName == parentUserName && request.senderUserName != userName)
+                        database.child("requests").child(request.senderUserName).removeValue().await()
+                    else if(request.recieverUserName == parentUserName && request.senderUserName == userName){
+                        request.isOkey = true
+                        database.child("requests").child(userName).setValue(request)
+                    }
+                    else if (request.senderUserName == parentUserName)
+                        database.child("requests").child(request.senderUserName).removeValue().await()
+
+                }
+            }
 
     }
 
