@@ -2,20 +2,32 @@ package com.example.mobilproje
 
 import GraduatPerson
 import RequestDataClass
+import android.app.AlertDialog
 import android.content.Context
+import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
+import android.location.LocationManager
 import android.os.Bundle
+import android.os.Looper
 import android.util.Base64
 import android.util.Log
+
 import android.view.*
+import android.view.inputmethod.InputMethodManager
+import android.widget.EditText
+import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.example.mobilproje.databinding.FragmentProfileBinding
+import com.google.android.gms.location.*
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
@@ -30,7 +42,11 @@ class ProfileFragment : Fragment() {
     private var _binding: FragmentProfileBinding? = null
     private val binding get() = _binding!!
     val database = FirebaseDatabase.getInstance().reference
+    private val LOCATION_PERMISSION_REQUEST_CODE = 100
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private lateinit var locationRequest: LocationRequest
     lateinit var user: GraduatPerson
+    lateinit var locationManager: LocationManager
     private var backPressedTime = Long.MIN_VALUE
     lateinit var sharedPrefs : SharedPreferences
     lateinit var editor : SharedPreferences.Editor
@@ -64,7 +80,13 @@ class ProfileFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setHasOptionsMenu(true)
+
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
+        locationRequest = LocationRequest.create().apply {
+            interval = 450000
+            fastestInterval = 225000
+            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        }
     }
 
 
@@ -76,35 +98,70 @@ class ProfileFragment : Fragment() {
         _binding = FragmentProfileBinding.inflate(inflater, container, false)
         userName = arguments?.getString("userName").toString()
         val toast = CustomToast(context)
+
         getDataAndSetupAdapter()
         binding.navigateButton.setOnClickListener {
             val bundle = bundleOf("userName" to userName)
+            if (ContextCompat.checkSelfPermission(
+                    requireContext(),
+                    ACCESS_FINE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
+                startLocationUpdates()
+            } else {
+                requestLocationPermission()
+            }
             findNavController().navigate(R.id.action_profile_to_homeScreen,bundle)
         }
 
-        binding.incomingRequestsText.setOnClickListener {
-            var myRef = database.child("requests").child("kamya123").ref
-            myRef.addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(dataSnapshot: DataSnapshot) {
-                    val request = dataSnapshot.getValue(RequestDataClass::class.java)
-                    if (dataSnapshot.exists() && request?.recieverUserName == userName) {
-                        // Gönderilecek verileri bir Bundle nesnesi içinde tutun
-                        val bundle = Bundle().apply {
-                            putString("applierUserName", userName)
-                            putString("senderUserName",request.senderUserName )
-                        }
-                        findNavController().navigate(R.id.action_profile_to_acceptRequestFragment, bundle)
 
-                    } else {
-                        toast.showMessage("Id not found",false)
-                        return
-                    }
+
+        binding.incomingRequestsText.setOnClickListener {
+            val builder = AlertDialog.Builder(requireContext())
+            builder.setTitle("Please enter a username to go to the page")
+
+            val input = EditText(requireContext())
+            builder.setView(input)
+
+            builder.setPositiveButton("OK") { _, _ ->
+                val username = input.text.toString()
+                if (username.isEmpty()) {
+                    Toast.makeText(requireContext(), "Please enter a username", Toast.LENGTH_SHORT).show()
+                } else {
+                    var myRef = database.child("requests").child(username).ref
+                    myRef.addListenerForSingleValueEvent(object : ValueEventListener {
+                        override fun onDataChange(dataSnapshot: DataSnapshot) {
+                            val request = dataSnapshot.getValue(RequestDataClass::class.java)
+                            if (dataSnapshot.exists() && request?.recieverUserName == userName) {
+                                // Gönderilecek verileri bir Bundle nesnesi içinde tutun
+                                val bundle = Bundle().apply {
+                                    putString("applierUserName", userName)
+                                    putString("senderUserName",request.senderUserName )
+                                }
+                                findNavController().navigate(R.id.action_profile_to_acceptRequestFragment, bundle)
+
+                            } else {
+                                toast.showMessage("This username was not found among the users who sent you a request",false)
+                                return
+                            }
+                        }
+                        override fun onCancelled(error: DatabaseError) {
+                            // Sorgu iptal edildi.
+                        }
+                    })
                 }
-                override fun onCancelled(error: DatabaseError) {
-                    // Sorgu iptal edildi.
-                }
-            })
+            }
+            builder.setNegativeButton("Cancel") { dialog, _ -> dialog.cancel() }
+
+            val dialog = builder.create()
+            dialog.show()
+
+            // Klavyeyi açmak için bu satırı ekleyin
+            input.requestFocus()
+            val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0)
         }
+
 
         val callback = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -206,6 +263,10 @@ class ProfileFragment : Fragment() {
                                 binding.incomingRequestsText.text = binding.incomingRequestsText.text.toString() + "\nId: " + request.senderUserName+
                                         " Name: " + request.senderName
                             }
+                            else if(request.senderUserName.equals(userName)){
+                                binding.outgoingRequestsText.text = binding.outgoingRequestsText.text.toString() + "\nId: " + request.senderUserName+
+                                        " Name: " + request.senderName
+                            }
                         }
                     }
 
@@ -217,6 +278,53 @@ class ProfileFragment : Fragment() {
             }
         })
     }
+    private fun startLocationUpdates() {
+        if (ContextCompat.checkSelfPermission(
+                requireContext(),
+                ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            fusedLocationClient.requestLocationUpdates(
+                locationRequest,
+                locationCallback,
+                Looper.getMainLooper()
+            )
+        } else {
+            requestPermissions(
+                arrayOf(ACCESS_FINE_LOCATION),
+                LOCATION_PERMISSION_REQUEST_CODE
+            )
+        }
+    }
+
+    private val locationCallback = object : LocationCallback() {
+        override fun onLocationResult(locationResult: LocationResult) {
+            locationResult.lastLocation?.let { location ->
+                database.child("locations").child(userName).setValue(location)
+            }
+        }
+    }
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                startLocationUpdates()
+            }
+        }
+    }
+
+    private fun requestLocationPermission() {
+        requestPermissions(
+            arrayOf(ACCESS_FINE_LOCATION),
+            LOCATION_PERMISSION_REQUEST_CODE
+        )
+    }
+
 
 
 

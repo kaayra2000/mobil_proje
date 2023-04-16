@@ -19,6 +19,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.Spinner
 import android.widget.TextView
+import androidx.navigation.fragment.findNavController
 import com.example.mobilproje.databinding.FragmentAcceptRequestBinding
 import com.example.mobilproje.databinding.FragmentLoginBinding
 import com.example.mobilproje.databinding.FragmentPartnerBinding
@@ -87,6 +88,20 @@ class AcceptRequestFragment : Fragment() {
                 }
                 .setNegativeButton(android.R.string.cancel, null)
                 .show()
+        }
+
+        binding.declineRequestButton.setOnClickListener {
+            AlertDialog.Builder(requireContext())
+                .setTitle("Confirmation")
+                .setMessage("Are you sure you want to reject this request?")
+                .setPositiveButton(android.R.string.ok) { _, _ ->
+                    database.child("requests").child(userName).removeValue()
+                    customToast.showMessage("Successfuly Rejected",false)
+                    findNavController().navigateUp()
+                }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
+
         }
 
         email.setOnClickListener {

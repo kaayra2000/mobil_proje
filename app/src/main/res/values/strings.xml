@@ -48,6 +48,7 @@
     <string name="delete">Delete</string>
     <string name="find_friend">Find Friend</string>
     <string name="send_request">Send Request</string>
-    <string name="incoming_requests">Incoming Requests</string>
+    <string name="incoming_requests">Incoming Requests \nClick To Reply</string>
     <string name="accept_request">Accept Request</string>
+    <string name="reject_request">Reject Request</string>
 </resources>
