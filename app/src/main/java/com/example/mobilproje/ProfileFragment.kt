@@ -1,6 +1,7 @@
 package com.example.mobilproje
 
 import GraduatPerson
+import MyLocation
 import RequestDataClass
 import android.app.AlertDialog
 import android.content.Context
@@ -46,7 +47,6 @@ class ProfileFragment : Fragment() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationRequest: LocationRequest
     lateinit var user: GraduatPerson
-    lateinit var locationManager: LocationManager
     private var backPressedTime = Long.MIN_VALUE
     lateinit var sharedPrefs : SharedPreferences
     lateinit var editor : SharedPreferences.Editor
@@ -83,8 +83,8 @@ class ProfileFragment : Fragment() {
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
         locationRequest = LocationRequest.create().apply {
-            interval = 450000
-            fastestInterval = 225000
+            interval = 1000
+            fastestInterval = 300
             priority = LocationRequest.PRIORITY_HIGH_ACCURACY
         }
     }
@@ -205,6 +205,7 @@ class ProfileFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         userName = sharedPrefs.getString("username","").toString()
+        startLocationUpdates()
     }
     private fun updateUser(i : DataSnapshot){
         try{
@@ -300,7 +301,10 @@ class ProfileFragment : Fragment() {
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(locationResult: LocationResult) {
             locationResult.lastLocation?.let { location ->
-                database.child("locations").child(userName).setValue(location)
+                val myLocation = MyLocation(latitude = location.latitude, longitude = location.latitude,
+                userName = userName, name = user.name, surName = user.surName
+                )
+                database.child("locations").child(userName).setValue(myLocation)
             }
         }
     }
@@ -324,6 +328,17 @@ class ProfileFragment : Fragment() {
             LOCATION_PERMISSION_REQUEST_CODE
         )
     }
+
+    override fun onPause() {
+        super.onPause()
+        fusedLocationClient.removeLocationUpdates(locationCallback)
+
+
+    }
+
+
+
+
 
 
 

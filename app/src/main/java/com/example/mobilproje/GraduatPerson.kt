@@ -23,4 +23,6 @@ data class RequestDataClass(
     var isOkey: Boolean = false,
     var senderName: String = ""
 ) : Serializable
-
+data class MyLocation(var latitude: Double, var longitude: Double, var userName: String, var name: String, var surName: String) {
+    constructor() : this(0.0, 0.0, "","","")
+}

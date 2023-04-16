@@ -139,7 +139,7 @@ class PartnerFragment : Fragment() {
                 customToast.showMessage("You can't request yourself", false)
                 return@setOnClickListener
             }
-            val userNameRef = database.child("persons").child(userName)
+            val userNameRef = database.child("persons").child(parentUserName)
 
             userNameRef.addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(dataSnapshot: DataSnapshot) {
