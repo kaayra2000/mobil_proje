@@ -24,6 +24,7 @@ import android.widget.ImageView
 import kotlinx.coroutines.suspendCancellableCoroutine
 import android.widget.Spinner
 import android.widget.TextView
+import androidx.core.app.NotificationCompat
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.os.bundleOf
 import androidx.lifecycle.lifecycleScope
@@ -31,16 +32,21 @@ import androidx.navigation.fragment.findNavController
 import com.example.mobilproje.databinding.FragmentPartnerBinding
 import com.example.mobilproje.databinding.FragmentProfileBinding
 import com.example.mobilproje.databinding.FragmentProfileSettingsBinding
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.google.firebase.messaging.FirebaseMessaging
+import com.google.firebase.messaging.RemoteMessage
+import kotlinx.android.synthetic.main.fragment_add_user.*
 import kotlinx.android.synthetic.main.toast_message.view.*
 import kotlinx.android.synthetic.main.user_item.view.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.tasks.await
 import java.io.ByteArrayOutputStream
 import java.net.URLEncoder
+import java.util.*
 
 
 class PartnerFragment : Fragment() {
@@ -61,6 +67,7 @@ class PartnerFragment : Fragment() {
     lateinit var phoneNumber : TextView
     lateinit var customToast: CustomToast
     lateinit var image : ImageView
+    var flag = false
     lateinit var sharedPrefs : SharedPreferences
     lateinit var editor : SharedPreferences.Editor
     lateinit var userName : String
@@ -135,6 +142,7 @@ class PartnerFragment : Fragment() {
 
 
         binding.sendRequestButton.setOnClickListener {
+            flag = false
             if (parentUserName == userName) {
                 customToast.showMessage("You can't request yourself", false)
                 return@setOnClickListener
@@ -146,20 +154,72 @@ class PartnerFragment : Fragment() {
                     if (!dataSnapshot.exists()) {
                         customToast.showMessage("You hasn't got a profile", false)
                     }else{
-                        val request = RequestDataClass(parentUserName, userName, false,
-                        gradPersonParent!!.name)
-                        val builder = AlertDialog.Builder(context)
-                        builder.setTitle("Are you sure?")
-                        builder.setMessage("Do you want to send a request to $parentUserName?")
-                        builder.setPositiveButton("Yes") { dialog, which ->
-                            database.child("requests").child(parentUserName).setValue(request)
-                            customToast.showMessage("Request sent", true)
-                            binding.sendRequestButton.isEnabled = false
+                        lifecycleScope.launch {
+                            database.child("requests").child(parentUserName).get().addOnCompleteListener { task ->
+                                if (task.isSuccessful) {
+                                    val snapshot = task.result
+                                    if (snapshot.exists()) {
+                                        flag = snapshot.getValue(RequestDataClass::class.java)!!.isOkey
+                                    } else {
+                                        // Veri mevcut değil
+                                    }
+                                } else {
+                                    // Hata oluştu
+                                }
+                            }
+
+
                         }
-                        builder.setNegativeButton("No") { dialog, which ->
-                            customToast.showMessage("Request cancelled", false)
+                        if(flag){
+                            customToast.showMessage("You have already accepted a request",false)
+                            return
                         }
-                        builder.show()
+                        database.child("requests").addListenerForSingleValueEvent(object : ValueEventListener {
+
+                            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                                for (ds in dataSnapshot.children) {
+                                    val request = ds.getValue(RequestDataClass::class.java)
+                                    if(flag)
+                                        break
+                                    if(request?.recieverUserName == parentUserName){
+                                        flag = request.isOkey
+                                    }
+                                }
+                                if(flag){
+                                    customToast.showMessage("You have already accepted a request",false)
+                                    return
+                                }
+                            }
+
+
+                            override fun onCancelled(databaseError: DatabaseError) {
+                                // Verileri okumakta bir hata oluşursa burada ele alabilirsiniz
+                            }
+                        })
+                        if(!flag){
+                            val request = RequestDataClass(parentUserName, userName, false,
+                            gradPersonParent!!.name)
+                            val builder = AlertDialog.Builder(context)
+                            builder.setTitle("Are you sure?")
+                            builder.setMessage("Do you want to send a request to $userName?")
+                            builder.setPositiveButton("Yes") { dialog, which ->
+                                database.child("requests").child(parentUserName).setValue(request)
+                                customToast.showMessage("Request sent", true)
+                                if(FirebaseAuth.getInstance().currentUser != null){
+                                lifecycleScope.launch {
+                                    val recipientToken = database.child("tokens").child(userName).get().await().getValue(String::class.java)
+                                    Notification().sendNotification(recipientToken.toString(), "Request from " + gradPersonParent?.name,
+                                        "We can live with you", requireActivity() as MainActivity
+                                    )
+                                }}
+
+
+                                binding.sendRequestButton.isEnabled = false
+                            }
+                            builder.setNegativeButton("No") { dialog, which ->
+                                customToast.showMessage("Request cancelled", false)
+                            }
+                            builder.show()}
 
                     }
                 }

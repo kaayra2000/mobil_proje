@@ -258,10 +258,10 @@ class RegisterFragment : Fragment() {
             returnVal = false
         }
 
-       if (!EMAIL_REGEX.toRegex().matches(email)){
+       /*if (!EMAIL_REGEX.toRegex().matches(email)){
             eMailEditText.setError("Incorrect Mail")
             returnVal = false
-        }
+        }*/
 
         if (!PhoneNumberUtils.isGlobalPhoneNumber(phoneNumber)){
             phoneNumberEditText.setError("Incorrect Phone Number")
@@ -371,7 +371,7 @@ class RegisterFragment : Fragment() {
 
                 } else {
                     updateUI(null)
-                    print(task.exception)
+                    toast.showMessage("Email already used",false)
                 }
             }
     }

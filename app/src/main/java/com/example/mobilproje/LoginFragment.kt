@@ -3,6 +3,7 @@ package com.example.mobilproje
 import GraduatPerson
 import android.annotation.SuppressLint
 import android.app.AlertDialog
+import android.content.ContentValues.TAG
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -10,6 +11,7 @@ import kotlinx.coroutines.*
 
 import android.os.Bundle
 import android.text.InputType
+import android.util.Log
 
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -24,11 +26,13 @@ import androidx.core.os.bundleOf
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.mobilproje.databinding.FragmentLoginBinding
+import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.android.synthetic.*
 import kotlinx.android.synthetic.main.fragment_register.view.*
 import kotlinx.coroutines.launch
@@ -67,7 +71,7 @@ class LoginFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-
+        FirebaseApp.initializeApp(requireContext())
         _binding = FragmentLoginBinding.inflate(inflater, container, false)
         return binding.root
 
@@ -162,15 +166,12 @@ class LoginFragment : Fragment() {
             userName = binding.userNameText.text.toString()
             password = binding.passwordText.text.toString()
             lifecycleScope.launch {
-                val currUser = database.child("users").
-                    child(userName).get().await().getValue(GraduatPerson::class.java)
-
-                if(currUser!=null){
-                    currUser.password = password
-                    checkIfUserExists(currUser)
+                 database.child("users").child(userName).get().await().getValue(GraduatPerson::class.java)?.let { user = it }
+                    user.password = password
+                    checkIfUserExists(user)
                 }
             }
-        }
+
 
     }
 
@@ -201,15 +202,26 @@ private fun checkIfUserExists(graduatPerson: GraduatPerson) {
         if (task.isSuccessful) {
                 val user = auth.currentUser
                 if(user!!.isEmailVerified){
+                        FirebaseMessaging.getInstance().token
+                        .addOnCompleteListener { task ->
+                            if (!task.isSuccessful) {
+                                Log.w(TAG, "Fetching FCM registration token failed", task.exception)
+                                return@addOnCompleteListener
+                            }
+
+                            // Get new FCM registration token
+                            val token = task.result
+                            database.child("tokens").child(graduatPerson.userName).setValue(token)
+                        }
 
                     try {
-                        database.child("users").child(userName).setValue(graduatPerson)
+                        database.child("users").child(graduatPerson.userName).setValue(graduatPerson)
                         toast.showMessage("Successfully Logged In", true)
-                        editor.putString("username", userName)
-                        editor.putString("password", password)
+                        editor.putString("username", graduatPerson.userName)
+                        editor.putString("password", graduatPerson.password)
                         editor.putBoolean("loginFlag",true)
                         editor.apply()
-                        val bundle = bundleOf("userName" to userName)
+                        val bundle = bundleOf("userName" to graduatPerson.userName)
                         findNavController().navigate(R.id.action_FirstFragment_to_profileSettings,bundle)
                     }catch (e: java.lang.Exception){
                         toast.showMessage("Error",false)

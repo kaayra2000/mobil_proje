@@ -16,7 +16,13 @@ data class GraduatPerson(
     var password: String = "",
     var photo: String? = null
 ) : Serializable
+class Data(val Title:String, val Message:String){
+    constructor():this("",""){}
+}
 
+class NotificationSender(val data: Data?, val to:String){
+    constructor():this(null,""){}
+}
 data class RequestDataClass(
     var senderUserName: String = "",
     var recieverUserName: String = "",

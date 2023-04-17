@@ -25,6 +25,8 @@ import com.example.mobilproje.databinding.FragmentAcceptRequestBinding
 import com.example.mobilproje.databinding.FragmentLoginBinding
 import com.example.mobilproje.databinding.FragmentPartnerBinding
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.messaging.FirebaseMessaging
+import com.google.firebase.messaging.RemoteMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -85,6 +87,7 @@ class AcceptRequestFragment : Fragment() {
                     database.child("persons").child(parentUserName).setValue(findPersonParent)
                     lifecycleScope.launch {
                         rejectAllRequests()
+                        sendNotif("okey", null)
                     }
                     binding.acceptRequestButton.isEnabled = false
                     binding.declineRequestButton.isEnabled = false
@@ -102,6 +105,7 @@ class AcceptRequestFragment : Fragment() {
                 .setPositiveButton(android.R.string.ok) { _, _ ->
                     database.child("requests").child(userName).removeValue()
                     customToast.showMessage("Successfuly Rejected",false)
+                    lifecycleScope.launch { sendNotif("not okey", null)}
                     findNavController().navigateUp()
                 }
                 .setNegativeButton(android.R.string.cancel, null)
@@ -187,7 +191,7 @@ class AcceptRequestFragment : Fragment() {
         gradPersonParent = database.child("users").child(parentUserName).get().await().getValue(GraduatPerson::class.java)
         findPersonParent = database.child("persons").child(parentUserName).get().await().getValue(FindPerson::class.java)
         req = database.child("requests").child(userName).get().await().getValue(RequestDataClass::class.java)
-        if (req!!.isOkey){
+        if (req!!.isOkey && req!!.recieverUserName == parentUserName){
             binding.declineRequestButton.isEnabled = false
             binding.acceptRequestButton.isEnabled = false
         }
@@ -214,6 +218,9 @@ class AcceptRequestFragment : Fragment() {
             if (dataSnapshot.exists()) {
                 for (requestSnapshot in dataSnapshot.children) {
                     val request = requestSnapshot.getValue(RequestDataClass::class.java)
+                    val token = database.child("tokens").child(request!!.senderUserName)
+                        .get().await().getValue(String::class.java)
+                    sendNotif("not okey", token)
                     if(request!!.recieverUserName == parentUserName && request.senderUserName != userName)
                         database.child("requests").child(request.senderUserName).removeValue().await()
                     else if(request.recieverUserName == parentUserName && request.senderUserName == userName){
@@ -225,6 +232,15 @@ class AcceptRequestFragment : Fragment() {
 
                 }
             }
+    }
+    private suspend fun sendNotif(text: String, token: String?){
+            var recipientToken = token
+            if(recipientToken == null){
+                recipientToken = database.child("tokens").child(userName).get().await().getValue(String::class.java)
+            }
+
+            Notification().sendNotification(recipientToken.toString(), "Request from " + gradPerson?.name,
+            "That's " + text, requireActivity() as MainActivity)
 
     }
 

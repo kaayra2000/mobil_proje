@@ -206,7 +206,7 @@ class ProfileFragment : Fragment() {
                 // handle error
             }
             override fun onDataChange(dataSnapshot: DataSnapshot) {
-                userName?.let {
+                userName.let {
                     updateUser(dataSnapshot.child("users").child(it))
                     initValues()
                 }
@@ -274,15 +274,16 @@ class ProfileFragment : Fragment() {
         myRef.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(dataSnapshot: DataSnapshot) {
                 if (dataSnapshot.exists()) {
-
+                    binding.incomingRequestsText.text = "Incoming Requests"
+                    binding.outgoingRequestsText.text = "Outgoing Request"
                     for (requestSnapshot in dataSnapshot.children) {
                         val request = requestSnapshot.getValue(RequestDataClass::class.java)
                         request?.let {
                             if(request.recieverUserName.equals(userName)){
-                                if(!request.isOkey)
+                                if(!request.isOkey && !binding.incomingRequestsText.text.toString().startsWith("Ac"))
                                 binding.incomingRequestsText.text = binding.incomingRequestsText.text.toString() + "\nId: " + request.senderUserName+
                                         " Name: " + request.senderName
-                                else
+                                else if(request.isOkey)
                                     binding.incomingRequestsText.text = "Accepted Request" + "\nId: " + request.senderUserName+
                                             " Name: " + request.senderName
                             }

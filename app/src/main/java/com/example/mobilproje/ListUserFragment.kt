@@ -83,8 +83,11 @@ class ListUserFragment : Fragment() {
 
     private fun getDataAndSetupAdapter() {
         val myRef = database.child("persons").ref
+
         myRef.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(dataSnapshot: DataSnapshot) {
+                userList.clear()
+                userListCopy.clear()
                 if (dataSnapshot.exists()) {
 
                     for (userSnapshot in dataSnapshot.children) {
