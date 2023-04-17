@@ -61,13 +61,14 @@ class PartnerFragment : Fragment() {
     lateinit var currClass  : TextView
     lateinit var stayDuration : TextView
     lateinit var distance : TextView
+    private var reqLis = mutableListOf<RequestDataClass>()
     private var gradPerson: GraduatPerson? = null
     private var gradPersonParent: GraduatPerson? = null
     lateinit var email : TextView
     lateinit var phoneNumber : TextView
     lateinit var customToast: CustomToast
     lateinit var image : ImageView
-    var flag = false
+    private var parenRequest: RequestDataClass? =  RequestDataClass("","",false,"")
     lateinit var sharedPrefs : SharedPreferences
     lateinit var editor : SharedPreferences.Editor
     lateinit var userName : String
@@ -89,6 +90,28 @@ class PartnerFragment : Fragment() {
         parentUserName = requireArguments().getString("parentUserName").toString()
         customToast = CustomToast(context)
         _binding = FragmentPartnerBinding.inflate(inflater, container, false)
+        lifecycleScope.launch {
+            parenRequest = database.child("requests").child(parentUserName).get()
+                .await().getValue(RequestDataClass::class.java)
+        }
+
+        database.child("requests").addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                reqLis.clear() // Mevcut listedeki önceki değerleri temizle
+                for (ds in dataSnapshot.children) {
+                    val request = ds.getValue(RequestDataClass::class.java)
+                    if(request?.senderUserName == parentUserName){
+                        parenRequest = request
+                    }
+                    request?.let { reqLis.add(it) }
+                }
+                // reqLis listesi güncellendiğinde burada gerekli işlemleri yapabilirsiniz
+            }
+
+            override fun onCancelled(databaseError: DatabaseError) {
+                // Verileri okumakta bir hata oluşursa burada ele alabilirsiniz
+            }
+        })
         return binding.root
     }
 
@@ -142,7 +165,6 @@ class PartnerFragment : Fragment() {
 
 
         binding.sendRequestButton.setOnClickListener {
-            flag = false
             if (parentUserName == userName) {
                 customToast.showMessage("You can't request yourself", false)
                 return@setOnClickListener
@@ -154,49 +176,7 @@ class PartnerFragment : Fragment() {
                     if (!dataSnapshot.exists()) {
                         customToast.showMessage("You hasn't got a profile", false)
                     }else{
-                        lifecycleScope.launch {
-                            database.child("requests").child(parentUserName).get().addOnCompleteListener { task ->
-                                if (task.isSuccessful) {
-                                    val snapshot = task.result
-                                    if (snapshot.exists()) {
-                                        flag = snapshot.getValue(RequestDataClass::class.java)!!.isOkey
-                                    } else {
-                                        // Veri mevcut değil
-                                    }
-                                } else {
-                                    // Hata oluştu
-                                }
-                            }
-
-
-                        }
-                        if(flag){
-                            customToast.showMessage("You have already accepted a request",false)
-                            return
-                        }
-                        database.child("requests").addListenerForSingleValueEvent(object : ValueEventListener {
-
-                            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                                for (ds in dataSnapshot.children) {
-                                    val request = ds.getValue(RequestDataClass::class.java)
-                                    if(flag)
-                                        break
-                                    if(request?.recieverUserName == parentUserName){
-                                        flag = request.isOkey
-                                    }
-                                }
-                                if(flag){
-                                    customToast.showMessage("You have already accepted a request",false)
-                                    return
-                                }
-                            }
-
-
-                            override fun onCancelled(databaseError: DatabaseError) {
-                                // Verileri okumakta bir hata oluşursa burada ele alabilirsiniz
-                            }
-                        })
-                        if(!flag){
+                        if(!controlAcceptedRequests()){
                             val request = RequestDataClass(parentUserName, userName, false,
                             gradPersonParent!!.name)
                             val builder = AlertDialog.Builder(context)
@@ -234,6 +214,31 @@ class PartnerFragment : Fragment() {
 
 
     }
+
+    private fun controlAcceptedRequests(): Boolean {
+        val flag = parenRequest?.isOkey == false
+        if(flag){
+            customToast.showMessage("You have already accepted a request", false)
+            return flag
+        }
+
+        return checkOtherRequests()
+    }
+
+    private fun checkOtherRequests(): Boolean {
+        var flag = false
+        for (request in reqLis) {
+            if (request.recieverUserName == parentUserName) {
+                flag = request.isOkey
+                if (flag) {
+                    customToast.showMessage("You have already accepted a request", false)
+                    break
+                }
+            }
+        }
+        return flag
+    }
+
 
 
 
