@@ -216,7 +216,10 @@ class PartnerFragment : Fragment() {
     }
 
     private fun controlAcceptedRequests(): Boolean {
-        val flag = parenRequest?.isOkey == false
+        var flag = false
+        parenRequest?.let {
+            flag = it.isOkey
+        }
         if(flag){
             customToast.showMessage("You have already accepted a request", false)
             return flag

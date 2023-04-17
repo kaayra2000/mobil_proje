@@ -103,10 +103,11 @@ class AcceptRequestFragment : Fragment() {
                 .setTitle("Confirmation")
                 .setMessage("Are you sure you want to reject this request?")
                 .setPositiveButton(android.R.string.ok) { _, _ ->
+
                     database.child("requests").child(userName).removeValue()
                     customToast.showMessage("Successfuly Rejected",false)
-                    lifecycleScope.launch { sendNotif("not okey", null)}
-                    findNavController().navigateUp()
+                    lifecycleScope.launch {
+                        sendNotif("not okey", null)}
                 }
                 .setNegativeButton(android.R.string.cancel, null)
                 .show()
@@ -236,10 +237,10 @@ class AcceptRequestFragment : Fragment() {
     private suspend fun sendNotif(text: String, token: String?){
             var recipientToken = token
             if(recipientToken == null){
-                recipientToken = database.child("tokens").child(userName).get().await().getValue(String::class.java)
+                recipientToken = database.child("tokens").child(gradPerson!!.userName).get().await().getValue(String::class.java)
             }
 
-            Notification().sendNotification(recipientToken.toString(), "Request from " + gradPerson?.name,
+            Notification().sendNotification(recipientToken.toString(), "Request from " + gradPersonParent?.name,
             "That's " + text, requireActivity() as MainActivity)
 
     }

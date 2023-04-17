@@ -125,7 +125,6 @@ class LoginFragment : Fragment() {
             val dialog = builder.create()
             dialog.show()
 
-            // Klavyeyi açmak için bu satırı ekleyin
             input.requestFocus()
             val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
             imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0)
