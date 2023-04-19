@@ -196,7 +196,7 @@ class LoginFragment : Fragment() {
 
 
 private fun checkIfUserExists(graduatPerson: GraduatPerson) {
-    if (graduatPerson.email.length > 6 && graduatPerson.password.length >6){
+    if (userName.length > 6 && graduatPerson.password.length >6){
     auth.signInWithEmailAndPassword(graduatPerson.email, graduatPerson.password).addOnCompleteListener { task ->
         if (task.isSuccessful) {
                 val user = auth.currentUser
@@ -229,7 +229,7 @@ private fun checkIfUserExists(graduatPerson: GraduatPerson) {
                 }
                 else{
                     user.sendEmailVerification()
-                    toast.showMessage("Email not verified",false)
+                    toast.showMessage("User not verified yet",false)
                 }
             }
         else{
