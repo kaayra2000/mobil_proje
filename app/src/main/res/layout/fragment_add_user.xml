@@ -1,4 +1,5 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -21,26 +22,31 @@
         android:layout_below="@id/title"
         android:layout_marginTop="16dp"
         android:src="@drawable/baseline_account_box_24_black" />
+<ScrollView
+
+    android:layout_width="match_parent"
+    android:layout_below="@id/profile_photo"
+    android:layout_height="match_parent">
+
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/profile_photo"
         android:layout_marginTop="16dp"
         android:orientation="vertical">
 
         <TextView
             android:id="@+id/tv_name"
             android:layout_width="match_parent"
-            android:drawableLeft="@drawable/baseline_name_surname"
             style="@style/EditTextStyle"
             android:layout_height="wrap_content"
-            android:hint="@string/name" />
+            android:hint="@string/name"
+            app:drawableLeftCompat="@drawable/baseline_name_surname" />
 
         <EditText
             android:id="@+id/tv_department"
             android:layout_width="match_parent"
-            android:drawableLeft="@drawable/baseline_business_center_24"
+            android:drawableStart="@drawable/baseline_business_center_24"
             style="@style/EditTextStyle"
             android:layout_height="wrap_content"
             android:hint="@string/department" />
@@ -48,7 +54,7 @@
         <EditText
             android:id="@+id/tv_class"
             style="@style/EditTextStyle"
-            android:drawableLeft="@drawable/baseline_edit_24"
+            android:drawableStart="@drawable/baseline_edit_24"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/student_class" />
@@ -56,7 +62,7 @@
         <EditText
             android:id="@+id/tv_stay_duration"
             android:layout_width="match_parent"
-            android:drawableLeft="@drawable/baseline_date_24"
+            android:drawableStart="@drawable/baseline_date_24"
             style="@style/EditTextStyle"
             android:layout_height="wrap_content"
             android:hint="@string/stay_duration" />
@@ -64,7 +70,7 @@
         <EditText
             android:id="@+id/tv_distance"
             android:layout_width="match_parent"
-            android:drawableLeft="@drawable/baseline_directions_bus_24"
+            android:drawableStart="@drawable/baseline_directions_bus_24"
             style="@style/EditTextStyle"
             android:layout_height="wrap_content"
             android:hint="@string/distance_to_campus" />
@@ -80,7 +86,7 @@
             android:id="@+id/tv_email_info"
             style="@style/EditTextStyle"
             android:layout_width="match_parent"
-            android:drawableLeft="@drawable/baseline_email_24"
+            android:drawableStart="@drawable/baseline_email_24"
             android:layout_height="wrap_content"
             android:hint="@string/email" />
 
@@ -88,7 +94,7 @@
             android:id="@+id/tv_phone_info"
             style="@style/EditTextStyle"
             android:layout_width="match_parent"
-            android:drawableLeft="@drawable/baseline_local_phone_24"
+            android:drawableStart="@drawable/baseline_local_phone_24"
             android:layout_height="wrap_content"
             android:hint="@string/phoneNumber" />
         <LinearLayout
@@ -111,11 +117,12 @@
                 android:layout_height="wrap_content"
                 android:text="@string/delete"
                 android:textAllCaps="false"
-                android:layout_marginHorizontal="8dp"/>
+                android:layout_marginHorizontal="8dp" />
 
         </LinearLayout>
 
 
 
     </LinearLayout>
+</ScrollView>
 </RelativeLayout>

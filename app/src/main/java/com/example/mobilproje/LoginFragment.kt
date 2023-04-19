@@ -181,15 +181,15 @@ class LoginFragment : Fragment() {
 
     private fun initNullGradPerson() :  GraduatPerson{
         return GraduatPerson(
-            email = "",
-            name = "",
-            surName = "",
-            password = "",
-            phoneNumber = "",
-            startDate = "",
-            endDate ="",
-            userName = "",
-            photo = ""
+            email = " ",
+            name = " ",
+            surName = " ",
+            password = " ",
+            phoneNumber = " ",
+            startDate = " ",
+            endDate =" ",
+            userName = " ",
+            photo = " "
 
         )
     }
