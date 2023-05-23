@@ -36,7 +36,7 @@
 ![image](https://github.com/kaayra2000/mobil_proje/assets/98055130/311d8aa7-3d27-475a-8e76-1e2b0c9783c5)
 
 ## Register Page
-![Uploading image.png…]()
+![image](https://github.com/kaayra2000/mobil_proje/assets/98055130/ceada3e6-8ff3-400e-86bd-c861b0a4904a)
 
 # Application's video is here 
 https://www.youtube.com/watch?v=-nEgYKZBpKk&t=285s
